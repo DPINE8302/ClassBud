@@ -249,6 +249,91 @@ to { opacity: 1; transform: translateY(0); }
             gap: 1rem;
         }
     }
+    
+    /* --- TASK MANAGEMENT STYLES --- */
+    .task-badge {
+        position: absolute;
+        top: 0.75rem; /* 12px */
+        right: 0.75rem; /* 12px */
+        background-color: var(--timeline-indicator);
+        color: white;
+        font-size: 0.7rem;
+        font-weight: 700;
+        width: 1.25rem; /* 20px */
+        height: 1.25rem; /* 20px */
+        border-radius: 9999px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 0 0 2px var(--bg-card);
+    }
+
+    .class-item-container {
+        position: relative; /* For badge positioning */
+        cursor: pointer;
+    }
+
+    #task-modal-content {
+        transition-property: transform, opacity;
+        transition-duration: 200ms;
+        transition-timing-function: ease-out;
+    }
+
+    #task-modal.is-open #task-modal-content {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    .task-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--border-color);
+    }
+    .task-item:last-child {
+        border-bottom: none;
+    }
+    .task-item-checkbox {
+        flex-shrink: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: 0.375rem;
+        border: 2px solid var(--border-color);
+        cursor: pointer;
+        appearance: none;
+        background-color: transparent;
+        transition: background-color 0.2s, border-color 0.2s;
+        position: relative;
+    }
+    .task-item-checkbox:checked {
+        background-color: var(--accent-primary);
+        border-color: var(--accent-primary);
+    }
+    .task-item-checkbox:checked::after {
+        content: '✔';
+        color: var(--text-on-accent);
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .task-item-text.is-completed {
+        text-decoration: line-through;
+        color: var(--text-secondary);
+    }
+    .task-delete-btn {
+        margin-left: auto;
+        color: var(--text-secondary);
+        padding: 0.25rem;
+        border-radius: 9999px;
+    }
+    .task-delete-btn:hover {
+        color: #ef4444;
+        background-color: rgba(239, 68, 68, 0.1);
+    }
 </style>
 </head>
 <body class="antialiased">
@@ -331,6 +416,13 @@ to { opacity: 1; transform: translateY(0); }
         </section>
     </main>
     
+</div>
+
+<!-- Task Management Modal -->
+<div id="task-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center p-4" aria-modal="true" role="dialog">
+    <div id="task-modal-content" class="bg-card w-full max-w-md rounded-2xl shadow-xl transform transition-all opacity-0 scale-95">
+        <!-- Content will be injected by JS -->
+    </div>
 </div>
 
 <footer class="text-center text-xs text-secondary mt-12 mb-6 space-y-1 px-4">
@@ -451,13 +543,11 @@ to { opacity: 1; transform: translateY(0); }
             "What's my schedule today?",
             "ตารางเรียนวันนี้",
             "What's my next class?",
-            "คาบต่อไปเรียนอะไร",
+            "การบ้านมีอะไรบ้าง",
             "Do I have Math tomorrow?",
             "พรุ่งนี้มีเรียนคณิตไหม",
             "Full weekly schedule",
-            "ตารางเรียนทั้งสัปดาห์",
-            "When can I go home?",
-            "กลับบ้านได้ตอนไหน"
+            "งานที่ยังไม่เสร็จ"
         ];
         
         let schedule = {};
@@ -487,6 +577,8 @@ to { opacity: 1; transform: translateY(0); }
         const notificationsToggleBtn = document.getElementById('notifications-toggle');
         const notificationsOnIcon = document.getElementById('notifications-on-icon');
         const notificationsOffIcon = document.getElementById('notifications-off-icon');
+        const taskModal = document.getElementById('task-modal');
+        const taskModalContent = document.getElementById('task-modal-content');
 
         // --- THEME FUNCTIONS ---
         const applyTheme = (theme) => {
@@ -647,38 +739,47 @@ to { opacity: 1; transform: translateY(0); }
             const savedSchedule = localStorage.getItem('classBuddySchedule');
             if (savedSchedule) {
                 schedule = JSON.parse(savedSchedule);
+                // Data migration: ensure tasks array exists for older schedules
+                Object.values(schedule).forEach(daySchedule => {
+                    if (Array.isArray(daySchedule)) {
+                        daySchedule.forEach(session => {
+                            if (!session.tasks) {
+                                session.tasks = [];
+                            }
+                        });
+                    }
+                });
             } else {
-                // Rebuilt schedule with class blocks and flipped classroom data
                 schedule = {
                     Monday: [
-                        { start: '08:15', end: '09:45', subject: 'ประวัติศาสตร์(7)', isFlipped: true },
-                        { start: '09:50', end: '16:00', subject: 'กิจกรรมพัฒนาผู้เรียน' },
+                        { start: '08:15', end: '09:45', subject: 'ประวัติศาสตร์(7)', isFlipped: true, tasks: [] },
+                        { start: '09:50', end: '16:00', subject: 'กิจกรรมพัฒนาผู้เรียน', tasks: [] },
                     ],
                     Tuesday: [
-                        { start: '07:45', end: '08:15', subject: 'Homeroom'},
-                        { start: '08:15', end: '09:00', subject: 'สุขศึกษา7' },
-                        { start: '09:00', end: '09:45', subject: 'พลศึกษา7' },
-                        { start: '09:50', end: '11:20', subject: 'การออกแบบสื่อมัลติมีเดีย' },
-                        { start: '12:55', end: '14:25', subject: 'อังกฤษฟัง-พูดเพื่อสื่อสาร 1' },
-                        { start: '14:30', end: '16:00', subject: 'ภาษาอังกฤษ 7' },
+                        { start: '07:45', end: '08:15', subject: 'Homeroom', tasks: []},
+                        { start: '08:15', end: '09:00', subject: 'สุขศึกษา7', tasks: [] },
+                        { start: '09:00', end: '09:45', subject: 'พลศึกษา7', tasks: [] },
+                        { start: '09:50', end: '11:20', subject: 'การออกแบบสื่อมัลติมีเดีย', tasks: [] },
+                        { start: '12:55', end: '14:25', subject: 'อังกฤษฟัง-พูดเพื่อสื่อสาร 1', tasks: [] },
+                        { start: '14:30', end: '16:00', subject: 'ภาษาอังกฤษ 7', tasks: [] },
                     ],
                     Wednesday: [
-                        { start: '08:15', end: '09:45', subject: 'การงานอาชีพ(4) (คอมพิวเตอร์)', isFlipped: true },
-                        { start: '09:50', end: '11:20', subject: 'คณิตศาสตร์ 7' },
-                        { start: '12:55', end: '14:25', subject: 'วิทยาศาสตร์กายภาพ 1' },
-                        { start: '14:30', end: '16:00', subject: 'การออกแบบกราฟิกคอมพิวเตอร์ 1' },
+                        { start: '08:15', end: '09:45', subject: 'การงานอาชีพ(4) (คอมพิวเตอร์)', isFlipped: true, tasks: [] },
+                        { start: '09:50', end: '11:20', subject: 'คณิตศาสตร์ 7', tasks: [] },
+                        { start: '12:55', end: '14:25', subject: 'วิทยาศาสตร์กายภาพ 1', tasks: [] },
+                        { start: '14:30', end: '16:00', subject: 'การออกแบบกราฟิกคอมพิวเตอร์ 1', tasks: [] },
                     ],
                     Thursday: [
-                        { start: '08:15', end: '09:45', subject: 'ศิลปะ 7 (ดนตรี)', isFlipped: true },
-                        { start: '09:50', end: '11:20', subject: 'คณิตศาสตร์เพิ่มเติม(1)' },
-                        { start: '12:55', end: '13:40', subject: 'กิจกรรมพัฒนาความคิดและจิตใจ' },
-                        { start: '13:40', end: '16:00', subject: 'พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์' },
+                        { start: '08:15', end: '09:45', subject: 'ศิลปะ 7 (ดนตรี)', isFlipped: true, tasks: [] },
+                        { start: '09:50', end: '11:20', subject: 'คณิตศาสตร์เพิ่มเติม(1)', tasks: [] },
+                        { start: '12:55', end: '13:40', subject: 'กิจกรรมพัฒนาความคิดและจิตใจ', tasks: [] },
+                        { start: '13:40', end: '16:00', subject: 'พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์', tasks: [] },
                     ],
                     Friday: [
-                        { start: '08:15', end: '09:45', subject: 'ภาษาไทย 7' },
-                        { start: '09:50', end: '11:20', subject: 'สังคมศึกษา ศาสนาและวัฒนธรรม 7' },
-                        { start: '12:55', end: '14:25', subject: 'การออกแบบกราฟิกคอมพิวเตอร์ 1' },
-                        { start: '14:30', end: '16:00', subject: 'คณิตศาสตร์เพิ่มเติม(1)' },
+                        { start: '08:15', end: '09:45', subject: 'ภาษาไทย 7', tasks: [] },
+                        { start: '09:50', end: '11:20', subject: 'สังคมศึกษา ศาสนาและวัฒนธรรม 7', tasks: [] },
+                        { start: '12:55', end: '14:25', subject: 'การออกแบบกราฟิกคอมพิวเตอร์ 1', tasks: [] },
+                        { start: '14:30', end: '16:00', subject: 'คณิตศาสตร์เพิ่มเติม(1)', tasks: [] },
                     ],
                     Saturday: [], 
                     Sunday: [],
@@ -697,7 +798,8 @@ to { opacity: 1; transform: translateY(0); }
                 card.className = 'schedule-card p-6 rounded-2xl';
                 let classesHtml = `<p class="text-secondary">No classes scheduled.</p>`;
                 if (dayClasses.length > 0) {
-                    classesHtml = dayClasses.map(cls => {
+                    classesHtml = dayClasses.map((cls, index) => {
+                        const pendingTasksCount = cls.tasks ? cls.tasks.filter(t => !t.completed).length : 0;
                         const subjectDisplay = `
                             <div class="flex items-center">
                                 <span class="font-medium text-primary">${cls.subject}</span>
@@ -706,9 +808,12 @@ to { opacity: 1; transform: translateY(0); }
                         `;
                         
                         return `
-                            <div class="flex justify-between items-center py-2 border-b last:border-b-0" style="border-color: rgba(var(--border-color-rgb, 209, 209, 214), 0.2)">
-                                ${subjectDisplay}
-                                <span class="text-sm bg-alt text-primary font-medium px-2.5 py-1 rounded-md whitespace-nowrap">${cls.start} - ${cls.end}</span>
+                            <div class="class-item-container" data-day="${day}" data-index="${index}">
+                                <div class="flex justify-between items-center py-2 border-b last:border-b-0" style="border-color: rgba(var(--border-color-rgb, 209, 209, 214), 0.2)">
+                                    ${subjectDisplay}
+                                    <span class="text-sm bg-alt text-primary font-medium px-2.5 py-1 rounded-md whitespace-nowrap">${cls.start} - ${cls.end}</span>
+                                </div>
+                                ${pendingTasksCount > 0 ? `<span class="task-badge">${pendingTasksCount}</span>` : ''}
                             </div>
                         `;
                     }).join('');
@@ -946,7 +1051,7 @@ to { opacity: 1; transform: translateY(0); }
                 if (action === 'remove' && index) {
                     daySchedule.splice(parseInt(index, 10), 1);
                 } else if (action === 'add') {
-                    daySchedule.push({ start: '09:00', end: '10:00', subject: 'New Class', isFlipped: false });
+                    daySchedule.push({ start: '09:00', end: '10:00', subject: 'New Class', isFlipped: false, tasks: [] });
                 }
                 schedule[day] = daySchedule;
                 saveSchedule();
@@ -978,6 +1083,106 @@ to { opacity: 1; transform: translateY(0); }
             }
         };
         
+        // --- TASK MANAGEMENT FUNCTIONS ---
+        const renderTaskModal = (day, classIndex) => {
+            const cls = schedule[day]?.[classIndex];
+            if (!cls || !taskModalContent) return;
+
+            const tasksHtml = (cls.tasks || []).map((task, taskIndex) => `
+                <div class="task-item">
+                    <input type="checkbox" class="task-item-checkbox" data-day="${day}" data-class-index="${classIndex}" data-task-index="${taskIndex}" ${task.completed ? 'checked' : ''} aria-label="${task.text}">
+                    <p class="task-item-text flex-grow ${task.completed ? 'is-completed' : ''}">${task.text}</p>
+                    <button class="task-delete-btn" data-day="${day}" data-class-index="${classIndex}" data-task-index="${taskIndex}" aria-label="Delete task">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `).join('');
+
+            taskModalContent.innerHTML = `
+                <div class="p-5 sm:p-6">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-primary">${cls.subject}</h3>
+                            <p class="text-sm text-secondary">${day}, ${cls.start} - ${cls.end}</p>
+                        </div>
+                        <button id="task-modal-close-btn" class="p-2 -mr-2 -mt-2 rounded-full text-secondary hover:bg-alt" aria-label="Close">
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                        </button>
+                    </div>
+
+                    <div id="task-list" class="max-h-64 overflow-y-auto pr-2 -mr-2 mb-4">
+                        ${(cls.tasks || []).length > 0 ? tasksHtml : `<p class="text-center text-secondary py-4">No tasks yet. Add one below!</p>`}
+                    </div>
+
+                    <form id="add-task-form" data-day="${day}" data-class-index="${classIndex}" class="flex items-center gap-2 sm:gap-3">
+                        <input type="text" id="add-task-input" placeholder="Add a new task..." class="flex-grow p-3 border border-default rounded-xl focus:ring-2 ring-accent focus:border-transparent transition w-full bg-alt placeholder:text-secondary" required autocomplete="off">
+                        <button type="submit" class="bg-accent text-on-accent font-semibold py-3 px-4 rounded-xl hover:bg-accent-hover transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ring-accent flex-shrink-0">
+                            Add
+                        </button>
+                    </form>
+                </div>
+            `;
+            
+            // Re-attach event listeners for the new content
+            document.getElementById('task-modal-close-btn').addEventListener('click', closeTaskModal);
+            document.getElementById('add-task-form').addEventListener('submit', handleAddTask);
+            taskModalContent.addEventListener('click', handleTaskItemClick);
+        };
+
+        const openTaskModal = (day, classIndex) => {
+            renderTaskModal(day, classIndex);
+            taskModal.classList.remove('hidden');
+            setTimeout(() => taskModal.classList.add('is-open'), 10); // For transition
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        };
+        
+        const closeTaskModal = () => {
+            taskModal.classList.remove('is-open');
+            setTimeout(() => {
+                taskModal.classList.add('hidden');
+                taskModalContent.innerHTML = '';
+                document.body.style.overflow = '';
+            }, 200); // Match transition duration
+        };
+
+        const handleTaskItemClick = (e) => {
+            const checkbox = e.target.closest('.task-item-checkbox');
+            const deleteBtn = e.target.closest('.task-delete-btn');
+            
+            if (!checkbox && !deleteBtn) return;
+            
+            const { day, classIndex, taskIndex } = (checkbox || deleteBtn).dataset;
+            const cls = schedule[day]?.[classIndex];
+            if (!cls) return;
+
+            if (checkbox) {
+                cls.tasks[taskIndex].completed = checkbox.checked;
+            } else if (deleteBtn) {
+                cls.tasks.splice(taskIndex, 1);
+            }
+            
+            saveSchedule();
+            renderTaskModal(day, classIndex);
+        };
+        
+        const handleAddTask = (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const input = form.querySelector('#add-task-input');
+            const { day, classIndex } = form.dataset;
+            const taskText = input.value.trim();
+
+            if (taskText && day && classIndex) {
+                const cls = schedule[day][classIndex];
+                if (!cls.tasks) cls.tasks = [];
+                cls.tasks.push({ text: taskText, completed: false });
+                saveSchedule();
+                renderTaskModal(day, classIndex);
+                input.value = '';
+                input.focus();
+            }
+        };
+
         // --- OFFLINE Q&A LOGIC (BILINGUAL) ---
         const processQuestionOffline = (query) => {
             const lowerQuery = query.toLowerCase().trim().replace(/[?.,]/g, '');
@@ -1014,6 +1219,64 @@ to { opacity: 1; transform: translateY(0); }
                 }
                 return null;
             };
+
+             // --- TASK/HOMEWORK INTENT ---
+            const taskKeywords = ['homework', 'task', 'assignment', 'due', 'การบ้าน', 'งาน', 'ต้องทำ', 'ต้องส่ง'];
+            if (taskKeywords.some(k => lowerQuery.includes(k))) {
+                const targetDay = extractDay();
+                const targetSubject = extractSubject();
+                const isUnfinishedQuery = lowerQuery.includes('unfinished') || lowerQuery.includes('pending') || lowerQuery.includes('ยังไม่เสร็จ');
+                let tasksFound = [];
+
+                const daysToSearch = targetDay ? [targetDay] : DAYS_OF_WEEK.slice(1, 6); // Mon-Fri if no day specified
+
+                daysToSearch.forEach(day => {
+                    (schedule[day] || []).forEach(cls => {
+                        if (targetSubject && cls.subject !== targetSubject) return;
+                        if (!cls.tasks || cls.tasks.length === 0) return;
+
+                        cls.tasks.forEach(task => {
+                            if (isUnfinishedQuery && task.completed) return;
+                            tasksFound.push({ day, subject: cls.subject, text: task.text, completed: task.completed });
+                        });
+                    });
+                });
+
+                if (tasksFound.length === 0) {
+                    let responseEng = isUnfinishedQuery ? "You have no pending tasks" : "No tasks found";
+                    let responseThai = isUnfinishedQuery ? "ไม่มีงานค้างเลย" : "ไม่พบงาน";
+                    if (targetSubject) {
+                        responseEng += ` for ${targetSubject}`;
+                        responseThai += `สำหรับวิชา ${targetSubject}`;
+                    }
+                    if (targetDay) {
+                        responseEng += ` on ${targetDay}`;
+                        responseThai += `ใน${ENG_TO_THAI_DAY_MAP[targetDay] || targetDay}`;
+                    }
+                    return getResponse(responseEng + ".", responseThai + "นะ");
+                }
+
+                let response = getResponse("Here are your tasks:", "นี่คือรายการงานของเธอ:");
+                const groupedTasks = tasksFound.reduce((acc, task) => {
+                    const key = `${task.day} - ${task.subject}`;
+                    if (!acc[key]) {
+                        acc[key] = { day: task.day, subject: task.subject, tasks: [] };
+                    }
+                    acc[key].tasks.push(task);
+                    return acc;
+                }, {});
+
+                for (const groupKey in groupedTasks) {
+                    const group = groupedTasks[groupKey];
+                    const dayDisplay = getResponse(group.day, ENG_TO_THAI_DAY_MAP[group.day]);
+                    response += `\n\n**${group.subject} (${dayDisplay})**`;
+                    group.tasks.forEach(task => {
+                        const status = task.completed ? getResponse(' (Done)', ' (เสร็จแล้ว)') : '';
+                        response += `\n- ${task.text}${isUnfinishedQuery ? '' : status}`;
+                    });
+                }
+                return response;
+            }
 
             const targetDay = extractDay();
             const targetSubject = extractSubject();
@@ -1302,6 +1565,25 @@ to { opacity: 1; transform: translateY(0); }
             scheduleInputsContainer.addEventListener('click', handleScheduleEdit);
             addClassBtn.style.display = 'none'; // Hide the old global add button
 
+            // Task Management Event Listeners
+            scheduleGrid.addEventListener('click', (e) => {
+                const classItem = e.target.closest('.class-item-container');
+                if (classItem && currentView === 'week') { // Only allow clicks in week view
+                    const { day, index } = classItem.dataset;
+                    openTaskModal(day, parseInt(index, 10));
+                }
+            });
+            taskModal.addEventListener('click', (e) => {
+                if (e.target === taskModal) { // Click on overlay to close
+                    closeTaskModal();
+                }
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === "Escape" && taskModal.classList.contains('is-open')) {
+                    closeTaskModal();
+                }
+            });
+
             // Suggestions logic
             questionInput.addEventListener('focus', updateSuggestions);
             questionInput.addEventListener('input', updateSuggestions);
@@ -1321,7 +1603,7 @@ to { opacity: 1; transform: translateY(0); }
             // Proactive welcome message
             const todayName = DAYS_OF_WEEK[new Date().getDay()];
             const todaySchedule = (schedule[todayName] || []).filter(c => c.start).sort((a,b) => a.start.localeCompare(b.start));
-            let welcomeMessage = "Hello! I'm ClassBuddy. Ask me anything about your schedule.";
+            let welcomeMessage = "Hello! I'm ClassBuddy. Ask me anything about your schedule or homework.";
             if (todaySchedule.length > 0) {
                 welcomeMessage = `Hello! I'm ClassBuddy. Today you have ${todaySchedule.length} class(es), starting with <strong>${todaySchedule[0].subject}</strong> at ${todaySchedule[0].start}. What can I help you with?`;
             } else if (todayName !== 'Saturday' && todayName !== 'Sunday') {
