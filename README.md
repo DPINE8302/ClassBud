@@ -1,4 +1,3 @@
-
 # ClassBuddy - Your Offline-First Schedule Assistant
 
 ClassBuddy is a smart, simple, and offline-first web application designed to help students manage their class schedules with ease. It features a bilingual chatbot, proactive notifications, and integrated task management, all wrapped in a clean, modern, and responsive UI.
@@ -6,7 +5,7 @@ ClassBuddy is a smart, simple, and offline-first web application designed to hel
 <!-- A screenshot of the application will be placed here -->
 <!-- ![ClassBuddy Screenshot](screenshot.png) -->
 
-## ✨ Key Features (v1.5.1)
+## ✨ Key Features (v1.5.2)
 
 - **Full Schedule Management**: Easily view your weekly schedule or a timeline for the current day.
 - **Edit On-the-Go**: A simple form allows you to add, remove, or modify classes. Your data is saved automatically.
@@ -30,8 +29,6 @@ ClassBuddy is a smart, simple, and offline-first web application designed to hel
 ## 🔧 Getting Started
 
 Since ClassBuddy is a zero-dependency, pure client-side application, you can run it by simply opening the `index.html` file in your browser.
-
-https://6863f8367c74168b0eec4df0--classbud.netlify.app
 
 ### Deployment
 

@@ -7,8 +7,8 @@
 
 <!-- PWA and SEO Meta Tags -->
 <meta name="description" content="Your intelligent class schedule assistant, always available offline.">
-<meta name="theme-color" content="#007AFF" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0A84FF" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -48,6 +48,9 @@
 --bg-badge: #4338ca;
 --text-badge: #eef2ff;
 --timeline-indicator: #ef4444;
+}
+html {
+    background-color: var(--bg-main);
 }
 body {
 font-family: -apple-system, BlinkMacSystemFont, "Sarabun", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -491,7 +494,7 @@ to { opacity: 1; transform: translateY(0); }
 
 
 <footer class="text-center text-xs text-secondary mt-12 mb-6 space-y-1 px-4">
-    <p>Version 1.5.1</p>
+    <p>Version 1.5.2</p>
     <p>© <span id="current-year">2025</span> Wiqnnc_. All Rights Reserved.</p>
     <p>Made with love by Win.</p>
 </footer>
@@ -806,7 +809,7 @@ to { opacity: 1; transform: translateY(0); }
         // --- DATA MANAGEMENT FUNCTIONS ---
         const exportData = () => {
             const dataToExport = {
-                version: '1.5.1',
+                version: '1.5.2',
                 exportedAt: new Date().toISOString(),
                 schedule: schedule,
                 settings: {

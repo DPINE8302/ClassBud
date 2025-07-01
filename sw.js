@@ -1,6 +1,6 @@
-// sw.js - Service Worker for ClassBuddy v1.5.1
+// sw.js - Service Worker for ClassBuddy v1.5.2
 
-const CACHE_NAME = 'classbuddy-cache-v1.5.1';
+const CACHE_NAME = 'classbuddy-cache-v1.5.2';
 const URLS_TO_CACHE = [
   '/',
   'index.html',
