@@ -106,6 +106,10 @@ to { opacity: 1; transform: translateY(0); }
     input:checked + .toggle-bg + .toggle-dot {
          transform: translateX(1.25rem); /* 20px */
     }
+    .peer:checked ~ .toggle-dot {
+        transform: translateX(1.25rem); /* For settings toggles */
+    }
+
 
     /* Suggestion Pill Styles */
     .suggestion-pill {
@@ -263,7 +267,19 @@ to { opacity: 1; transform: translateY(0); }
         }
     }
     
-    /* --- TASK MANAGEMENT STYLES --- */
+    /* --- TASK & SETTINGS MODAL STYLES --- */
+    #task-modal-content, #settings-modal-content {
+        transition-property: transform, opacity;
+        transition-duration: 200ms;
+        transition-timing-function: ease-out;
+    }
+
+    #task-modal.is-open #task-modal-content,
+    #settings-modal.is-open #settings-modal-content {
+        opacity: 1;
+        transform: scale(1);
+    }
+    
     .task-badge {
         position: absolute;
         top: 0.75rem; /* 12px */
@@ -284,17 +300,6 @@ to { opacity: 1; transform: translateY(0); }
     .class-item-container {
         position: relative; /* For badge positioning */
         cursor: pointer;
-    }
-
-    #task-modal-content {
-        transition-property: transform, opacity;
-        transition-duration: 200ms;
-        transition-timing-function: ease-out;
-    }
-
-    #task-modal.is-open #task-modal-content {
-        opacity: 1;
-        transform: scale(1);
     }
 
     .task-item {
@@ -365,9 +370,11 @@ to { opacity: 1; transform: translateY(0); }
                  <div class="flex justify-between items-center gap-y-3 mb-4 px-1">
                     <h2 id="qa-heading" class="text-lg font-bold text-primary">Chat with Buddy</h2>
                      <div class="flex items-center">
-                         <button id="theme-toggle" type="button" class="p-2 rounded-full text-secondary hover:bg-alt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent" aria-label="Toggle theme">
-                             <svg id="theme-toggle-dark-icon" class="hidden h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                             <svg id="theme-toggle-light-icon" class="hidden h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                         <button id="settings-btn" type="button" class="p-2 rounded-full text-secondary hover:bg-alt focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent" aria-label="Open settings">
+                             <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                             </svg>
                          </button>
                      </div>
                 </div>
@@ -395,14 +402,6 @@ to { opacity: 1; transform: translateY(0); }
                         <button id="week-view-btn" class="view-toggle-btn active w-1/2">Week</button>
                         <button id="day-view-btn" class="view-toggle-btn w-1/2">Day</button>
                     </div>
-                    <button id="notifications-toggle" type="button" class="p-2 rounded-full text-secondary hover:bg-alt transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent" aria-label="Toggle notifications">
-                        <svg id="notifications-on-icon" class="hidden h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-                        </svg>
-                        <svg id="notifications-off-icon" class="hidden h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.23 3.23l17.53 17.53" />
-                        </svg>
-                    </button>
                     <button id="edit-schedule-toggle" class="text-sm font-semibold py-2 px-4 rounded-lg border border-default text-secondary hover:bg-alt transition-colors sm:w-auto flex-shrink-0">
                         Edit
                     </button>
@@ -439,8 +438,61 @@ to { opacity: 1; transform: translateY(0); }
     </div>
 </div>
 
+<!-- Settings Modal -->
+<div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center p-4" aria-modal="true" role="dialog">
+    <div id="settings-modal-content" class="bg-card w-full max-w-md rounded-2xl shadow-xl transform transition-all opacity-0 scale-95">
+        <div class="p-5 sm:p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-primary">Settings</h3>
+                <button id="settings-modal-close-btn" class="p-2 -mr-2 -mt-2 rounded-full text-secondary hover:bg-alt" aria-label="Close">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Appearance Section -->
+                <div>
+                    <h4 class="text-md font-semibold text-primary mb-2">Appearance</h4>
+                    <div class="flex items-center justify-between bg-alt p-3 rounded-lg">
+                        <label for="theme-toggle-switch" class="font-medium text-primary cursor-pointer">Dark Mode</label>
+                        <div class="relative">
+                            <input type="checkbox" id="theme-toggle-switch" class="sr-only peer">
+                            <div class="toggle-bg block w-11 h-6 rounded-full"></div>
+                            <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications Section -->
+                <div>
+                    <h4 class="text-md font-semibold text-primary mb-2">Notifications</h4>
+                     <div class="flex items-center justify-between bg-alt p-3 rounded-lg">
+                        <label for="notifications-toggle-switch" class="font-medium text-primary cursor-pointer">Class Reminders</label>
+                        <div class="relative">
+                            <input type="checkbox" id="notifications-toggle-switch" class="sr-only peer">
+                            <div id="notifications-toggle-bg" class="toggle-bg block w-11 h-6 rounded-full"></div>
+                            <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full"></div>
+                        </div>
+                    </div>
+                    <p class="text-xs text-secondary mt-2 px-1">Get notified 10 minutes before a class starts. You may need to grant permission.</p>
+                </div>
+
+                <!-- Data Management Section -->
+                <div>
+                    <h4 class="text-md font-semibold text-primary mb-2">Data Management</h4>
+                    <div class="space-y-2">
+                         <button id="export-data-btn" class="w-full text-center bg-alt font-semibold py-2 px-4 rounded-lg text-primary hover:bg-border-default transition-colors">Export Schedule Data</button>
+                         <button id="import-data-btn" class="w-full text-center bg-alt font-semibold py-2 px-4 rounded-lg text-primary hover:bg-border-default transition-colors">Import Schedule Data</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <footer class="text-center text-xs text-secondary mt-12 mb-6 space-y-1 px-4">
-    <p>Version 1.4</p>
+    <p>Version 1.5</p>
     <p>© <span id="current-year">2025</span> Wiqnnc_. All Rights Reserved.</p>
     <p>Made with love by Win.</p>
 </footer>
@@ -580,31 +632,29 @@ to { opacity: 1; transform: translateY(0); }
         const chatSuggestionsContainer = document.getElementById('chat-suggestions-container');
         const scheduleGrid = document.getElementById('schedule-grid');
         const timelineView = document.getElementById('timeline-view');
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
-        const themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
         const editScheduleToggleBtn = document.getElementById('edit-schedule-toggle');
         const editScheduleForm = document.getElementById('edit-schedule-form');
         const scheduleInputsContainer = document.getElementById('schedule-inputs');
         const addClassBtn = document.getElementById('add-class-btn');
         const weekViewBtn = document.getElementById('week-view-btn');
         const dayViewBtn = document.getElementById('day-view-btn');
-        const notificationsToggleBtn = document.getElementById('notifications-toggle');
-        const notificationsOnIcon = document.getElementById('notifications-on-icon');
-        const notificationsOffIcon = document.getElementById('notifications-off-icon');
         const taskModal = document.getElementById('task-modal');
         const taskModalContent = document.getElementById('task-modal-content');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const settingsModalContent = document.getElementById('settings-modal-content');
+        const settingsModalCloseBtn = document.getElementById('settings-modal-close-btn');
+        const themeToggleSwitch = document.getElementById('theme-toggle-switch');
+        const notificationsToggleSwitch = document.getElementById('notifications-toggle-switch');
+        const exportDataBtn = document.getElementById('export-data-btn');
+        const importDataBtn = document.getElementById('import-data-btn');
 
-        // --- THEME FUNCTIONS ---
+        // --- THEME & SETTINGS FUNCTIONS ---
         const applyTheme = (theme) => {
             if (theme === 'dark') {
                 document.documentElement.classList.add('dark');
-                themeToggleDarkIcon.classList.remove('hidden');
-                themeToggleLightIcon.classList.add('hidden');
             } else {
                 document.documentElement.classList.remove('dark');
-                themeToggleDarkIcon.classList.add('hidden');
-                themeToggleLightIcon.classList.remove('hidden');
             }
             // Update scroll hint for theme change
             if (currentView === 'day') {
@@ -613,10 +663,45 @@ to { opacity: 1; transform: translateY(0); }
         };
 
         const toggleTheme = () => {
-            const isDarkMode = document.documentElement.classList.contains('dark');
-            const newTheme = isDarkMode ? 'light' : 'dark';
+            const newTheme = themeToggleSwitch.checked ? 'dark' : 'light';
             localStorage.setItem('classBuddyTheme', newTheme);
             applyTheme(newTheme);
+        };
+        
+        const openSettingsModal = () => {
+            updateSettingsModalState();
+            settingsModal.classList.remove('hidden');
+            setTimeout(() => {
+                settingsModal.classList.add('is-open');
+                settingsModalContent.classList.add('opacity-100', 'scale-100');
+                settingsModalContent.classList.remove('opacity-0', 'scale-95');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeSettingsModal = () => {
+            settingsModal.classList.remove('is-open');
+            settingsModalContent.classList.remove('opacity-100', 'scale-100');
+            settingsModalContent.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                settingsModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 200); // Match transition duration
+        };
+
+        const updateSettingsModalState = () => {
+            // Theme
+            themeToggleSwitch.checked = document.documentElement.classList.contains('dark');
+            
+            // Notifications
+            notificationsToggleSwitch.checked = notificationsEnabled && Notification.permission === 'granted';
+            if (Notification.permission === 'denied') {
+                notificationsToggleSwitch.disabled = true;
+                document.getElementById('notifications-toggle-bg').classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                notificationsToggleSwitch.disabled = false;
+                 document.getElementById('notifications-toggle-bg').classList.remove('opacity-50', 'cursor-not-allowed');
+            }
         };
         
         const addChatBubble = (message, sender) => {
@@ -634,30 +719,6 @@ to { opacity: 1; transform: translateY(0); }
         };
         
         // --- NOTIFICATION FUNCTIONS ---
-        const updateNotificationUI = () => {
-            if (!notificationsToggleBtn) return;
-            // First, reset to default state
-            notificationsOnIcon.classList.add('hidden');
-            notificationsOffIcon.classList.add('hidden');
-            notificationsToggleBtn.classList.remove('text-accent-primary', 'opacity-50', 'cursor-not-allowed');
-            notificationsToggleBtn.classList.add('text-secondary');
-
-            if (Notification.permission === 'granted' && notificationsEnabled) {
-                notificationsOnIcon.classList.remove('hidden');
-                notificationsToggleBtn.classList.add('text-accent');
-                notificationsToggleBtn.classList.remove('text-secondary');
-                notificationsToggleBtn.title = "Disable notifications";
-            } else {
-                notificationsOffIcon.classList.remove('hidden');
-                notificationsToggleBtn.title = "Enable notifications";
-            }
-            
-            if (Notification.permission === 'denied') {
-                notificationsToggleBtn.title = "Notifications blocked in browser";
-                notificationsToggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-        };
-
         const startNotificationWatcher = () => {
             if (notificationCheckInterval) clearInterval(notificationCheckInterval);
             checkAndNotify(); // Check immediately on start
@@ -713,6 +774,7 @@ to { opacity: 1; transform: translateY(0); }
         const handleNotificationToggle = async () => {
             if (Notification.permission === 'denied') {
                 addChatBubble("You've blocked notifications. Please enable them in your browser settings if you want reminders.", 'bot');
+                updateSettingsModalState(); // Revert switch state
                 return;
             }
 
@@ -724,10 +786,12 @@ to { opacity: 1; transform: translateY(0); }
                     addChatBubble("Great! I'll notify you 10 minutes before each class starts.", 'bot');
                     startNotificationWatcher();
                 } else {
-                     addChatBubble("No problem. If you change your mind, just click the bell icon again.", 'bot');
+                     addChatBubble("No problem. If you change your mind, just open settings again.", 'bot');
+                     notificationsEnabled = false;
+                     localStorage.setItem('classBuddyNotifications', 'false');
                 }
             } else if (Notification.permission === 'granted') {
-                notificationsEnabled = !notificationsEnabled;
+                notificationsEnabled = notificationsToggleSwitch.checked;
                 localStorage.setItem('classBuddyNotifications', notificationsEnabled.toString());
                 if (notificationsEnabled) {
                     addChatBubble("Notifications are back on!", 'bot');
@@ -737,9 +801,81 @@ to { opacity: 1; transform: translateY(0); }
                     stopNotificationWatcher();
                 }
             }
-            updateNotificationUI();
+            updateSettingsModalState();
         };
 
+        // --- DATA MANAGEMENT FUNCTIONS ---
+        const exportData = () => {
+            const dataToExport = {
+                version: '1.5',
+                exportedAt: new Date().toISOString(),
+                schedule: schedule,
+                settings: {
+                    notificationsEnabled: notificationsEnabled,
+                    theme: localStorage.getItem('classBuddyTheme') || 'light',
+                }
+            };
+            const dataStr = JSON.stringify(dataToExport, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const date = new Date().toISOString().slice(0, 10);
+            a.download = `classbuddy_backup_${date}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            addChatBubble("Your data has been exported! Keep the file safe.", 'bot');
+        };
+
+        const importData = () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'application/json,.json';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = readerEvent => {
+                    try {
+                        const importedData = JSON.parse(readerEvent.target.result);
+                        if (importedData && importedData.schedule) {
+                            if (confirm('This will overwrite your current schedule and settings. Are you sure?')) {
+                                schedule = importedData.schedule;
+                                
+                                // Import settings
+                                const theme = importedData.settings?.theme || 'light';
+                                localStorage.setItem('classBuddyTheme', theme);
+                                applyTheme(theme);
+                                
+                                const notifEnabled = importedData.settings?.notificationsEnabled || false;
+                                notificationsEnabled = notifEnabled && Notification.permission === 'granted';
+                                localStorage.setItem('classBuddyNotifications', notificationsEnabled.toString());
+                                
+                                // Re-initialize things that depend on the new data
+                                saveSchedule(); // this also calls renderSchedule
+                                if (notificationsEnabled) {
+                                    startNotificationWatcher();
+                                } else {
+                                    stopNotificationWatcher();
+                                }
+                                addChatBubble("✅ Data imported successfully! Your schedule has been updated.", 'bot');
+                                closeSettingsModal();
+                            }
+                        } else {
+                            throw new Error('Invalid file structure.');
+                        }
+                    } catch (error) {
+                        console.error("Failed to import data:", error);
+                        addChatBubble("❌ Oops! The selected file is not a valid ClassBuddy backup.", 'bot');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        };
 
         // --- LOCAL STORAGE & SCHEDULE DATA ---
         const saveSchedule = () => {
@@ -1028,8 +1164,8 @@ to { opacity: 1; transform: translateY(0); }
                                 <span class="text-sm text-secondary mr-2">Flipped</span>
                                 <div class="relative">
                                     <input type="checkbox" data-day="${day}" data-index="${index}" data-field="isFlipped" class="sr-only peer" ${session.isFlipped ? 'checked' : ''}>
-                                    <div class="toggle-bg block w-11 h-6 rounded-full peer-checked:bg-accent"></div>
-                                    <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full peer-checked:translate-x-full"></div>
+                                    <div class="toggle-bg block w-11 h-6 rounded-full"></div>
+                                    <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full"></div>
                                 </div>
                             </label>
                             <button data-day="${day}" data-index="${index}" data-action="remove" class="remove-btn" aria-label="Remove class">
@@ -1147,12 +1283,18 @@ to { opacity: 1; transform: translateY(0); }
         const openTaskModal = (day, classIndex) => {
             renderTaskModal(day, classIndex);
             taskModal.classList.remove('hidden');
-            setTimeout(() => taskModal.classList.add('is-open'), 10); // For transition
+            setTimeout(() => {
+                taskModal.classList.add('is-open');
+                taskModalContent.classList.add('opacity-100', 'scale-100');
+                taskModalContent.classList.remove('opacity-0', 'scale-95');
+            }, 10);
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
         };
         
         const closeTaskModal = () => {
             taskModal.classList.remove('is-open');
+            taskModalContent.classList.remove('opacity-100', 'scale-100');
+            taskModalContent.classList.add('opacity-0', 'scale-95');
             setTimeout(() => {
                 taskModal.classList.add('hidden');
                 taskModalContent.innerHTML = '';
@@ -1531,7 +1673,6 @@ to { opacity: 1; transform: translateY(0); }
             addChatBubble(answer.replace(/\n/g, '<br>'), 'bot');
         });
 
-        themeToggleBtn.addEventListener('click', toggleTheme);
         weekViewBtn.addEventListener('click', () => switchView('week'));
         dayViewBtn.addEventListener('click', () => switchView('day'));
 
@@ -1548,18 +1689,15 @@ to { opacity: 1; transform: translateY(0); }
                 const savedNotificationPref = localStorage.getItem('classBuddyNotifications');
                 if (savedNotificationPref === 'true' && Notification.permission === 'granted') {
                     notificationsEnabled = true;
+                    startNotificationWatcher();
                 } else if (savedNotificationPref === 'false') {
                     notificationsEnabled = false;
                 }
-                
-                notificationsToggleBtn.addEventListener('click', handleNotificationToggle);
-                updateNotificationUI();
-
-                if (notificationsEnabled) {
-                    startNotificationWatcher();
-                }
             } else {
-                if(notificationsToggleBtn) notificationsToggleBtn.style.display = 'none';
+                if(settingsBtn) { // Hide settings related to notifications if not supported
+                    const notificationSection = document.querySelector('#notifications-toggle-switch').closest('div.flex.items-center.justify-between');
+                    if(notificationSection) notificationSection.parentElement.style.display = 'none';
+                }
             }
 
             // Add styles for the edit form
@@ -1580,6 +1718,14 @@ to { opacity: 1; transform: translateY(0); }
             scheduleInputsContainer.addEventListener('click', handleScheduleEdit);
             addClassBtn.style.display = 'none'; // Hide the old global add button
 
+            // Settings Modal Listeners
+            settingsBtn.addEventListener('click', openSettingsModal);
+            settingsModalCloseBtn.addEventListener('click', closeSettingsModal);
+            themeToggleSwitch.addEventListener('change', toggleTheme);
+            notificationsToggleSwitch.addEventListener('change', handleNotificationToggle);
+            exportDataBtn.addEventListener('click', exportData);
+            importDataBtn.addEventListener('click', importData);
+
             // Task Management Event Listeners
             scheduleGrid.addEventListener('click', (e) => {
                 const classItem = e.target.closest('.class-item-container');
@@ -1593,9 +1739,15 @@ to { opacity: 1; transform: translateY(0); }
                     closeTaskModal();
                 }
             });
+            settingsModal.addEventListener('click', (e) => {
+                if (e.target === settingsModal) {
+                    closeSettingsModal();
+                }
+            });
             document.addEventListener('keydown', (e) => {
-                if (e.key === "Escape" && taskModal.classList.contains('is-open')) {
-                    closeTaskModal();
+                if (e.key === "Escape") {
+                    if (taskModal.classList.contains('is-open')) closeTaskModal();
+                    if (settingsModal.classList.contains('is-open')) closeSettingsModal();
                 }
             });
 
