@@ -6,7 +6,7 @@ ClassBuddy is a smart, simple, and offline-first web application designed to hel
 <!-- A screenshot of the application will be placed here -->
 <!-- ![ClassBuddy Screenshot](screenshot.png) -->
 
-## ✨ Key Features (v1.5)
+## ✨ Key Features (v1.5.1)
 
 - **Full Schedule Management**: Easily view your weekly schedule or a timeline for the current day.
 - **Edit On-the-Go**: A simple form allows you to add, remove, or modify classes. Your data is saved automatically.

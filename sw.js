@@ -1,6 +1,6 @@
-// sw.js - Service Worker for ClassBuddy v1.5
+// sw.js - Service Worker for ClassBuddy v1.5.1
 
-const CACHE_NAME = 'classbuddy-cache-v1.5';
+const CACHE_NAME = 'classbuddy-cache-v1.5.1';
 const URLS_TO_CACHE = [
   '/',
   'index.html',
@@ -44,45 +44,42 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event: serve from cache if available, otherwise fetch from network (Cache-first strategy)
+// Fetch event: Serve from cache if available, otherwise fetch from network (Cache-first strategy)
 self.addEventListener('fetch', event => {
-  // We only handle GET requests
+  // We only handle GET requests.
   if (event.request.method !== 'GET') {
     return;
   }
 
   event.respondWith(
-    caches.match(event.request)
-      .then(cachedResponse => {
-        // If the resource is in the cache, return it
-        if (cachedResponse) {
-          return cachedResponse;
+    caches.match(event.request).then(cachedResponse => {
+      // If we have a cached response, return it.
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+
+      // If not, fetch from the network.
+      return fetch(event.request).then(networkResponse => {
+        // Clone the response because it's a one-time-use stream.
+        const responseToCache = networkResponse.clone();
+
+        // Check if the response is valid to be cached.
+        // We'll cache successful responses (status 200-299) and opaque responses (from CDNs).
+        if (networkResponse.ok || networkResponse.type === 'opaque') {
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
         }
-
-        // If the resource is not in the cache, fetch it from the network
-        return fetch(event.request).then(
-          networkResponse => {
-            // Check if we received a valid response.
-            // A response that is not "ok" (e.g., 404) or an opaque response (for cross-origin requests) should still be passed through.
-            if (!networkResponse || networkResponse.status !== 200) {
-              return networkResponse;
-            }
-
-            // Clone the response because it's a one-time-use stream
-            const responseToCache = networkResponse.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                // Add the new resource to the cache for next time
-                cache.put(event.request, responseToCache);
-              });
-
-            return networkResponse;
-          }
-        ).catch(error => {
-            console.error('Service Worker: Fetch failed. This is expected if offline and the resource is not cached.', error);
-            // This will result in a browser error page, which is acceptable for non-cached assets when offline.
-        });
-      })
+        
+        // Return the original network response to the browser.
+        return networkResponse;
+      }).catch(error => {
+        // This happens when the network request fails, and there's no cached version.
+        // This is expected when offline and accessing a resource for the first time.
+        console.warn(`Fetch failed for: ${event.request.url}. This is expected if you are offline and the resource is not cached.`, error);
+        // We must re-throw the error to let the browser handle it.
+        throw error;
+      });
+    })
   );
 });
