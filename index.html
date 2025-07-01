@@ -353,7 +353,6 @@ to { opacity: 1; transform: translateY(0); }
         background-color: rgba(239, 68, 68, 0.1);
     }
 </style>
-<link rel="stylesheet" href="/index.css">
 </head>
 <body class="antialiased">
 <div id="app" class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
@@ -439,7 +438,7 @@ to { opacity: 1; transform: translateY(0); }
 </div>
 
 <!-- Settings Modal -->
-<div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-40 flex items-center justify-center p-4" aria-modal="true" role="dialog">
+<div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center p-4" aria-modal="true" role="dialog">
     <div id="settings-modal-content" class="bg-card w-full max-w-md rounded-2xl shadow-xl transform transition-all opacity-0 scale-95">
         <div class="p-5 sm:p-6">
             <div class="flex justify-between items-center mb-6">
@@ -454,12 +453,12 @@ to { opacity: 1; transform: translateY(0); }
                 <div>
                     <h4 class="text-md font-semibold text-primary mb-2">Appearance</h4>
                     <div class="flex items-center justify-between bg-alt p-3 rounded-lg">
-                        <label for="theme-toggle-switch" class="font-medium text-primary cursor-pointer">Dark Mode</label>
-                        <div class="relative">
+                        <span class="font-medium text-primary">Dark Mode</span>
+                        <label for="theme-toggle-switch" class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="theme-toggle-switch" class="sr-only peer">
                             <div class="toggle-bg block w-11 h-6 rounded-full"></div>
                             <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full"></div>
-                        </div>
+                        </label>
                     </div>
                 </div>
 
@@ -467,12 +466,12 @@ to { opacity: 1; transform: translateY(0); }
                 <div>
                     <h4 class="text-md font-semibold text-primary mb-2">Notifications</h4>
                      <div class="flex items-center justify-between bg-alt p-3 rounded-lg">
-                        <label for="notifications-toggle-switch" class="font-medium text-primary cursor-pointer">Class Reminders</label>
-                        <div class="relative">
+                        <span class="font-medium text-primary">Class Reminders</span>
+                         <label for="notifications-toggle-switch" class="relative inline-flex items-center cursor-pointer">
                             <input type="checkbox" id="notifications-toggle-switch" class="sr-only peer">
                             <div id="notifications-toggle-bg" class="toggle-bg block w-11 h-6 rounded-full"></div>
                             <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full"></div>
-                        </div>
+                        </label>
                     </div>
                     <p class="text-xs text-secondary mt-2 px-1">Get notified 10 minutes before a class starts. You may need to grant permission.</p>
                 </div>
@@ -1786,6 +1785,5 @@ to { opacity: 1; transform: translateY(0); }
         init();
     });
 </script>
-<script type="module" src="/index.tsx"></script>
 </body>
 </html>
