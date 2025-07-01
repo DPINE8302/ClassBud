@@ -31,6 +31,8 @@ ClassBuddy is a smart, simple, and offline-first web application designed to hel
 
 Since ClassBuddy is a zero-dependency, pure client-side application, you can run it by simply opening the `index.html` file in your browser.
 
+https://6863f8367c74168b0eec4df0--classbud.netlify.app
+
 ### Deployment
 
 This app is ready for static deployment. You can deploy it to services like:
