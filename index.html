@@ -291,11 +291,19 @@ to { opacity: 1; transform: translateY(0); }
         <section id="schedule-section" aria-labelledby="schedule-heading">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-4">
                 <h2 id="schedule-heading" class="text-2xl sm:text-3xl font-extrabold text-primary tracking-tight">Schedule</h2>
-                 <div class="flex items-center gap-4 w-full sm:w-auto">
+                 <div class="flex items-center gap-2 w-full sm:w-auto">
                     <div id="view-toggle-group" class="bg-alt p-1 rounded-full flex text-sm font-semibold flex-grow">
                         <button id="week-view-btn" class="view-toggle-btn active w-1/2">Week</button>
                         <button id="day-view-btn" class="view-toggle-btn w-1/2">Day</button>
                     </div>
+                    <button id="notifications-toggle" type="button" class="p-2 rounded-full text-secondary hover:bg-alt transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent" aria-label="Toggle notifications">
+                        <svg id="notifications-on-icon" class="hidden h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
+                        </svg>
+                        <svg id="notifications-off-icon" class="hidden h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.23 3.23l17.53 17.53" />
+                        </svg>
+                    </button>
                     <button id="edit-schedule-toggle" class="text-sm font-semibold py-2 px-4 rounded-lg border border-default text-secondary hover:bg-alt transition-colors sm:w-auto flex-shrink-0">
                         Edit
                     </button>
@@ -455,6 +463,9 @@ to { opacity: 1; transform: translateY(0); }
         let schedule = {};
         let currentView = 'week';
         let timeIndicatorInterval = null;
+        let notificationsEnabled = false;
+        let notificationCheckInterval = null;
+        const NOTIFICATION_LEAD_TIME_MINUTES = 10;
 
 
         // --- DOM ELEMENTS ---
@@ -473,6 +484,9 @@ to { opacity: 1; transform: translateY(0); }
         const addClassBtn = document.getElementById('add-class-btn');
         const weekViewBtn = document.getElementById('week-view-btn');
         const dayViewBtn = document.getElementById('day-view-btn');
+        const notificationsToggleBtn = document.getElementById('notifications-toggle');
+        const notificationsOnIcon = document.getElementById('notifications-on-icon');
+        const notificationsOffIcon = document.getElementById('notifications-off-icon');
 
         // --- THEME FUNCTIONS ---
         const applyTheme = (theme) => {
@@ -497,6 +511,128 @@ to { opacity: 1; transform: translateY(0); }
             localStorage.setItem('classBuddyTheme', newTheme);
             applyTheme(newTheme);
         };
+        
+        const addChatBubble = (message, sender) => {
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble p-3 rounded-2xl mb-2 max-w-xs sm:max-w-md break-words';
+            if (sender === 'user') {
+                bubble.classList.add('bg-accent', 'text-on-accent', 'ml-auto');
+            } else {
+                bubble.classList.add('bg-alt', 'text-primary', 'mr-auto');
+            }
+            bubble.innerHTML = message;
+            chatContainer.appendChild(bubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return bubble;
+        };
+        
+        // --- NOTIFICATION FUNCTIONS ---
+        const updateNotificationUI = () => {
+            if (!notificationsToggleBtn) return;
+            // First, reset to default state
+            notificationsOnIcon.classList.add('hidden');
+            notificationsOffIcon.classList.add('hidden');
+            notificationsToggleBtn.classList.remove('text-accent-primary', 'opacity-50', 'cursor-not-allowed');
+            notificationsToggleBtn.classList.add('text-secondary');
+
+            if (Notification.permission === 'granted' && notificationsEnabled) {
+                notificationsOnIcon.classList.remove('hidden');
+                notificationsToggleBtn.classList.add('text-accent');
+                notificationsToggleBtn.classList.remove('text-secondary');
+                notificationsToggleBtn.title = "Disable notifications";
+            } else {
+                notificationsOffIcon.classList.remove('hidden');
+                notificationsToggleBtn.title = "Enable notifications";
+            }
+            
+            if (Notification.permission === 'denied') {
+                notificationsToggleBtn.title = "Notifications blocked in browser";
+                notificationsToggleBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        };
+
+        const startNotificationWatcher = () => {
+            if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+            checkAndNotify(); // Check immediately on start
+            notificationCheckInterval = setInterval(checkAndNotify, 60000); // Check every minute
+        };
+
+        const stopNotificationWatcher = () => {
+            if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+            notificationCheckInterval = null;
+        };
+
+        const checkAndNotify = () => {
+            if (!notificationsEnabled || Notification.permission !== 'granted') return;
+
+            const now = new Date();
+            const todayName = DAYS_OF_WEEK[now.getDay()];
+            const todaySchedule = (schedule[todayName] || []).filter(c => c.start && c.end);
+            if (todaySchedule.length === 0) return;
+
+            const notifiedClassesKey = `notified-${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+            let notifiedToday = JSON.parse(sessionStorage.getItem(notifiedClassesKey) || '[]');
+
+            const timeToDate = (timeStr) => {
+                const [h, m] = timeStr.split(':').map(Number);
+                const d = new Date();
+                d.setHours(h, m, 0, 0);
+                return d;
+            };
+
+            for (const cls of todaySchedule) {
+                const classTime = timeToDate(cls.start);
+                const diffMinutes = (classTime.getTime() - now.getTime()) / 60000;
+                
+                const notificationId = `${todayName}-${cls.start}-${cls.subject}`;
+                if (diffMinutes > 0 && diffMinutes <= NOTIFICATION_LEAD_TIME_MINUTES && !notifiedToday.includes(notificationId)) {
+                    new Notification('Upcoming Class', {
+                        body: `${cls.subject} is starting at ${cls.start}.`,
+                        tag: notificationId // Use a tag to prevent duplicate notifications if logic runs fast
+                    });
+                    notifiedToday.push(notificationId);
+                }
+            }
+            sessionStorage.setItem(notifiedClassesKey, JSON.stringify(notifiedToday));
+            
+            // Clean up sessionStorage for previous days
+            Object.keys(sessionStorage).forEach(key => {
+                if (key.startsWith('notified-') && key !== notifiedClassesKey) {
+                    sessionStorage.removeItem(key);
+                }
+            });
+        };
+
+        const handleNotificationToggle = async () => {
+            if (Notification.permission === 'denied') {
+                addChatBubble("You've blocked notifications. Please enable them in your browser settings if you want reminders.", 'bot');
+                return;
+            }
+
+            if (Notification.permission === 'default') {
+                const permission = await Notification.requestPermission();
+                if (permission === 'granted') {
+                    notificationsEnabled = true;
+                    localStorage.setItem('classBuddyNotifications', 'true');
+                    addChatBubble("Great! I'll notify you 10 minutes before each class starts.", 'bot');
+                    startNotificationWatcher();
+                } else {
+                     addChatBubble("No problem. If you change your mind, just click the bell icon again.", 'bot');
+                }
+            } else if (Notification.permission === 'granted') {
+                notificationsEnabled = !notificationsEnabled;
+                localStorage.setItem('classBuddyNotifications', notificationsEnabled.toString());
+                if (notificationsEnabled) {
+                    addChatBubble("Notifications are back on!", 'bot');
+                    startNotificationWatcher();
+                } else {
+                    addChatBubble("Notifications paused. I won't send you any more reminders.", 'bot');
+                    stopNotificationWatcher();
+                }
+            }
+            updateNotificationUI();
+        };
+
 
         // --- LOCAL STORAGE & SCHEDULE DATA ---
         const saveSchedule = () => {
@@ -720,20 +856,6 @@ to { opacity: 1; transform: translateY(0); }
                 if (timeIndicatorInterval) clearInterval(timeIndicatorInterval);
                 timeIndicatorInterval = setInterval(updateTimeIndicator, 60000); // Update every minute
             }
-        };
-
-        const addChatBubble = (message, sender) => {
-            const bubble = document.createElement('div');
-            bubble.className = 'chat-bubble p-3 rounded-2xl mb-2 max-w-xs sm:max-w-md break-words';
-            if (sender === 'user') {
-                bubble.classList.add('bg-accent', 'text-on-accent', 'ml-auto');
-            } else {
-                bubble.classList.add('bg-alt', 'text-primary', 'mr-auto');
-            }
-            bubble.innerHTML = message;
-            chatContainer.appendChild(bubble);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return bubble;
         };
 
         const renderSuggestions = (suggestions) => {
@@ -1142,6 +1264,25 @@ to { opacity: 1; transform: translateY(0); }
             const savedTheme = localStorage.getItem('classBuddyTheme');
             const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
             applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
+            // Notification setup
+            if ('Notification' in window) {
+                const savedNotificationPref = localStorage.getItem('classBuddyNotifications');
+                if (savedNotificationPref === 'true' && Notification.permission === 'granted') {
+                    notificationsEnabled = true;
+                } else if (savedNotificationPref === 'false') {
+                    notificationsEnabled = false;
+                }
+                
+                notificationsToggleBtn.addEventListener('click', handleNotificationToggle);
+                updateNotificationUI();
+
+                if (notificationsEnabled) {
+                    startNotificationWatcher();
+                }
+            } else {
+                if(notificationsToggleBtn) notificationsToggleBtn.style.display = 'none';
+            }
 
             // Add styles for the edit form
             const style = document.createElement('style');
