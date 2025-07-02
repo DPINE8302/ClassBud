@@ -2,3 +2,1372 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
 */
+// --- SERVICE WORKER FOR OFFLINE SUPPORT ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(registration => console.log('ServiceWorker registration successful with scope: ', registration.scope))
+            .catch(err => console.log('ServiceWorker registration failed: ', err));
+    });
+}
+
+// --- TYPES ---
+
+// --- STATE & CONSTANTS ---
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const ENG_TO_THAI_DAY_MAP = { 'Monday': 'วันจันทร์', 'Tuesday': 'วันอังคาร', 'Wednesday': 'วันพุธ', 'Thursday': 'วันพฤหัสบดี', 'Friday': 'วันศุกร์', 'Saturday': 'วันเสาร์', 'Sunday': 'วันอาทิตย์' };
+const THAI_REGEX = /[\u0E00-\u0E7F]/;
+
+const DAY_KEYWORD_MAP = {
+    'monday': 'Monday', 'mon': 'Monday', 'วันจันทร์': 'Monday', 'จันทร์': 'Monday',
+    'tuesday': 'Tuesday', 'tue': 'Tuesday', 'tues': 'Tuesday', 'วันอังคาร': 'Tuesday', 'อังคาร': 'Tuesday',
+    'wednesday': 'Wednesday', 'wed': 'Wednesday', 'วันพุธ': 'Wednesday', 'พุธ': 'Wednesday',
+    'thursday': 'Thursday', 'thu': 'Thursday', 'thurs': 'Thursday', 'วันพฤหัสบดี': 'Thursday', 'พฤหัส': 'Thursday',
+    'friday': 'Friday', 'fri': 'Friday', 'วันศุกร์': 'Friday', 'ศุกร์': 'Friday',
+    'saturday': 'Saturday', 'sat': 'Saturday', 'วันเสาร์': 'Saturday', 'เสาร์': 'Saturday',
+    'sunday': 'Sunday', 'sun': 'Sunday', 'วันอาทิตย์': 'Sunday', 'อาทิตย์': 'Sunday',
+    'today': 'today', 'วันนี้': 'today',
+    'tomorrow': 'tomorrow', 'พรุ่งนี้': 'tomorrow',
+    'yesterday': 'yesterday', 'เมื่อวาน': 'yesterday',
+};
+
+const TIME_CONTEXT_MAP = {
+    'morning': { start: '00:00', end: '12:00', eng: 'morning', thai: 'ตอนเช้า' },
+    'ตอนเช้า': { start: '00:00', end: '12:00', eng: 'morning', thai: 'ตอนเช้า' },
+    'afternoon': { start: '12:00', end: '17:00', eng: 'afternoon', thai: 'ตอนบ่าย' },
+    'ตอนบ่าย': { start: '12:00', end: '17:00', eng: 'afternoon', thai: 'ตอนบ่าย' },
+    'evening': { start: '17:00', end: '24:00', eng: 'evening', thai: 'ตอนเย็น' },
+    'ตอนเย็น': { start: '17:00', end: '24:00', eng: 'evening', thai: 'ตอนเย็น' },
+};
+
+// Expanded map for better bilingual and slang understanding
+const SUBJECT_KEYWORD_MAP = {
+    // ประวัติศาสตร์(7)
+    'ประวัติ': 'ประวัติศาสตร์(7)', 'ประวัติศาสตร์': 'ประวัติศาสตร์(7)', 'history': 'ประวัติศาสตร์(7)',
+
+    // กิจกรรมพัฒนาผู้เรียน
+    'กิจกรรม': 'กิจกรรมพัฒนาผู้เรียน', 'กิจกรรมพัฒนาผู้เรียน': 'กิจกรรมพัฒนาผู้เรียน', 'พัฒนา': 'กิจกรรมพัฒนาผู้เรียน',
+
+    // พลศึกษา7
+    'พละ': 'พลศึกษา7', 'pe': 'พลศึกษา7', 'phys ed': 'พลศึกษา7', 'physical education': 'พลศึกษา7',
+
+    // สุขศึกษา7
+    'สุขศึกษา': 'สุขศึกษา7', 'health': 'สุขศึกษา7',
+
+    // การออกแบบสื่อมัลติมีเดีย
+    'ออกแบบสื่อ': 'การออกแบบสื่อมัลติมีเดีย', 'มัลติมีเดีย': 'การออกแบบสื่อมัลติมีเดีย', 'multimedia': 'การออกแบบสื่อมัลติมีเดีย',
+
+    // อังกฤษฟัง-พูดเพื่อสื่อสาร 1
+    'อังกฤษฟังพูด': 'อังกฤษฟัง-พูดเพื่อสื่อสาร 1', 'listening speaking': 'อังกฤษฟัง-พูดเพื่อสื่อสาร 1',
+
+    // ภาษาอังกฤษ 7
+    'อังกฤษ': 'ภาษาอังกฤษ 7', 'eng': 'ภาษาอังกฤษ 7', 'english': 'ภาษาอังกฤษ 7',
+
+    // การงานอาชีพ(4) (คอมพิวเตอร์)
+    'การงาน': 'การงานอาชีพ(4) (คอมพิวเตอร์)', 'คอม': 'การงานอาชีพ(4) (คอมพิวเตอร์)', 'คอมพิวเตอร์': 'การงานอาชีพ(4) (คอมพิวเตอร์)', 'computer': 'การงานอาชีพ(4) (คอมพิวเตอร์)', 'วิชาคอม': 'การงานอาชีพ(4) (คอมพิวเตอร์)',
+
+    // คณิตศาสตร์ 7
+    'คณิต': 'คณิตศาสตร์ 7', 'math': 'คณิตศาสตร์ 7', 'คณิตศาสตร์': 'คณิตศาสตร์ 7',
+
+    // วิทยาศาสตร์กายภาพ 1
+    'วิทย์': 'วิทยาศาสตร์กายภาพ 1', 'science': 'วิทยาศาสตร์กายภาพ 1', 'วิทยาศาสตร์': 'วิทยาศาสตร์กายภาพ 1', 'physics': 'วิทยาศาสตร์กายภาพ 1', 'biology': 'วิทยาศาสตร์กายภาพ 1', 'chemistry': 'วิทยาศาสตร์กายภาพ 1',
+
+    // การออกแบบกราฟิกคอมพิวเตอร์ 1
+    'ออกแบบกราฟิก': 'การออกแบบกราฟิกคอมพิวเตอร์ 1', 'graphic design': 'การออกแบบกราฟิกคอมพิวเตอร์ 1',
+
+    // ศิลปะ 7 (ดนตรี)
+    'ศิลปะ': 'ศิลปะ 7 (ดนตรี)', 'ดนตรี': 'ศิลปะ 7 (ดนตรี)', 'art': 'ศิลปะ 7 (ดนตรี)', 'music': 'ศิลปะ 7 (ดนตรี)',
+
+    // คณิตศาสตร์เพิ่มเติม(1)
+    'คณิตเพิ่ม': 'คณิตศาสตร์เพิ่มเติม(1)', 'add math': 'คณิตศาสตร์เพิ่มเติม(1)', 'additional math': 'คณิตศาสตร์เพิ่มเติม(1)',
+
+    // กิจกรรมพัฒนาความคิดและจิตใจ
+    'พัฒนาความคิด': 'กิจกรรมพัฒนาความคิดและจิตใจ',
+
+    // พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์
+    'เขียนโปรแกรม': 'พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์', 'programming': 'พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์', 'coding': 'พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์',
+
+    // ภาษาไทย 7
+    'ไทย': 'ภาษาไทย 7', 'thai': 'ภาษาไทย 7',
+
+    // สังคมศึกษา ศาสนาและวัฒนธรรม 7
+    'สังคม': 'สังคมศึกษา ศาสนาและวัฒนธรรม 7', 'social studies': 'สังคมศึกษา ศาสนาและวัฒนธรรม 7',
+
+    // Homeroom
+    'homeroom': 'Homeroom', 'โฮมรูม': 'Homeroom'
+};
+
+const REVERSE_SUBJECT_KEYWORD_MAP = Object.entries(SUBJECT_KEYWORD_MAP).reduce((acc, [keyword, subject]) => {
+    if (!acc[subject]) {
+        acc[subject] = { eng: [], thai: [] };
+    }
+    if (THAI_REGEX.test(keyword)) {
+        acc[subject].thai.push(keyword);
+    } else {
+        acc[subject].eng.push(keyword);
+    }
+    return acc;
+}, {});
+
+const CHAT_SUGGESTIONS = [
+    "What's my schedule today?",
+    "ตารางเรียนวันนี้",
+    "What's my next class?",
+    "การบ้านมีอะไรบ้าง",
+    "Do I have Math tomorrow?",
+    "พรุ่งนี้มีเรียนคณิตไหม",
+    "Full weekly schedule",
+    "งานที่ยังไม่เสร็จ"
+];
+
+let schedule = {};
+let subjectColors = {};
+let currentView = 'week';
+let timeIndicatorInterval = null;
+let notificationsEnabled = false;
+let notificationCheckInterval = null;
+const NOTIFICATION_LEAD_TIME_MINUTES = 10;
+const PALETTE = ["#ff6b6b", "#f06595", "#cc5de8", "#845ef7", "#5c7cfa", "#339af0", "#22b8cf", "#20c997", "#51cf66", "#94d82d", "#fcc419", "#ff922b"];
+
+
+// --- DOM ELEMENTS ---
+const qaForm = document.getElementById('qa-form');
+const questionInput = document.getElementById('question-input');
+const chatContainer = document.getElementById('chat-container');
+const chatSuggestionsContainer = document.getElementById('chat-suggestions-container');
+const scheduleGrid = document.getElementById('schedule-grid');
+const timelineView = document.getElementById('timeline-view');
+const editScheduleToggleBtn = document.getElementById('edit-schedule-toggle');
+const editScheduleForm = document.getElementById('edit-schedule-form');
+const scheduleInputsContainer = document.getElementById('schedule-inputs');
+const addClassBtn = document.getElementById('add-class-btn');
+const weekViewBtn = document.getElementById('week-view-btn');
+const dayViewBtn = document.getElementById('day-view-btn');
+const taskModal = document.getElementById('task-modal');
+const taskModalContent = document.getElementById('task-modal-content');
+const settingsBtn = document.getElementById('settings-btn');
+const settingsModal = document.getElementById('settings-modal');
+const settingsModalContent = document.getElementById('settings-modal-content');
+const settingsModalCloseBtn = document.getElementById('settings-modal-close-btn');
+const themeToggleSwitch = document.getElementById('theme-toggle-switch');
+const notificationsToggleSwitch = document.getElementById('notifications-toggle-switch');
+const exportDataBtn = document.getElementById('export-data-btn');
+const importDataBtn = document.getElementById('import-data-btn');
+
+// --- THEME & SETTINGS FUNCTIONS ---
+const applyTheme = (theme) => {
+    if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    // Update scroll hint for theme change
+    if (currentView === 'day') {
+        updateScrollHint();
+    }
+};
+
+const toggleTheme = () => {
+    const newTheme = themeToggleSwitch.checked ? 'dark' : 'light';
+    localStorage.setItem('classBuddyTheme', newTheme);
+    applyTheme(newTheme);
+};
+
+const openSettingsModal = () => {
+    updateSettingsModalState();
+    settingsModal.classList.remove('hidden');
+    setTimeout(() => {
+        settingsModal.classList.add('is-open');
+        settingsModalContent.classList.add('opacity-100', 'scale-100');
+        settingsModalContent.classList.remove('opacity-0', 'scale-95');
+    }, 10);
+    document.body.style.overflow = 'hidden';
+};
+
+const closeSettingsModal = () => {
+    settingsModal.classList.remove('is-open');
+    settingsModalContent.classList.remove('opacity-100', 'scale-100');
+    settingsModalContent.classList.add('opacity-0', 'scale-95');
+    setTimeout(() => {
+        settingsModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }, 200); // Match transition duration
+};
+
+const updateSettingsModalState = () => {
+    // Theme
+    themeToggleSwitch.checked = document.documentElement.classList.contains('dark');
+    
+    // Notifications
+    notificationsToggleSwitch.checked = notificationsEnabled && Notification.permission === 'granted';
+    if (Notification.permission === 'denied') {
+        notificationsToggleSwitch.disabled = true;
+        document.getElementById('notifications-toggle-bg').classList.add('opacity-50', 'cursor-not-allowed');
+    } else {
+        notificationsToggleSwitch.disabled = false;
+         document.getElementById('notifications-toggle-bg').classList.remove('opacity-50', 'cursor-not-allowed');
+    }
+};
+
+const addChatBubble = (message, sender) => {
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble p-3 rounded-2xl mb-2 max-w-xs sm:max-w-md break-words';
+    if (sender === 'user') {
+        bubble.classList.add('bg-accent', 'text-on-accent', 'ml-auto');
+    } else {
+        bubble.classList.add('bg-alt', 'text-primary', 'mr-auto');
+    }
+    bubble.innerHTML = message;
+    chatContainer.appendChild(bubble);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return bubble;
+};
+
+// --- NOTIFICATION FUNCTIONS ---
+const startNotificationWatcher = () => {
+    if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+    checkAndNotify(); // Check immediately on start
+    notificationCheckInterval = setInterval(checkAndNotify, 60000); // Check every minute
+};
+
+const stopNotificationWatcher = () => {
+    if (notificationCheckInterval) clearInterval(notificationCheckInterval);
+    notificationCheckInterval = null;
+};
+
+const checkAndNotify = () => {
+    if (!notificationsEnabled || Notification.permission !== 'granted') return;
+
+    const now = new Date();
+    const todayName = DAYS_OF_WEEK[now.getDay()];
+    const todaySchedule = (schedule[todayName] || []).filter(c => c.start && c.end);
+    if (todaySchedule.length === 0) return;
+
+    const notifiedClassesKey = `notified-${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+    let notifiedToday = JSON.parse(sessionStorage.getItem(notifiedClassesKey) || '[]');
+
+    const timeToDate = (timeStr) => {
+        const [h, m] = timeStr.split(':').map(Number);
+        const d = new Date();
+        d.setHours(h, m, 0, 0);
+        return d;
+    };
+
+    for (const cls of todaySchedule) {
+        const classTime = timeToDate(cls.start);
+        const diffMinutes = (classTime.getTime() - now.getTime()) / 60000;
+        
+        const notificationId = `${todayName}-${cls.start}-${cls.subject}`;
+        if (diffMinutes > 0 && diffMinutes <= NOTIFICATION_LEAD_TIME_MINUTES && !notifiedToday.includes(notificationId)) {
+            new Notification('Upcoming Class', {
+                body: `${cls.subject} is starting at ${cls.start}.`,
+                tag: notificationId // Use a tag to prevent duplicate notifications if logic runs fast
+            });
+            notifiedToday.push(notificationId);
+        }
+    }
+    sessionStorage.setItem(notifiedClassesKey, JSON.stringify(notifiedToday));
+    
+    // Clean up sessionStorage for previous days
+    Object.keys(sessionStorage).forEach(key => {
+        if (key.startsWith('notified-') && key !== notifiedClassesKey) {
+            sessionStorage.removeItem(key);
+        }
+    });
+};
+
+const handleNotificationToggle = async () => {
+    if (Notification.permission === 'denied') {
+        addChatBubble("You've blocked notifications. Please enable them in your browser settings if you want reminders.", 'bot');
+        updateSettingsModalState(); // Revert switch state
+        return;
+    }
+
+    if (Notification.permission === 'default') {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            notificationsEnabled = true;
+            localStorage.setItem('classBuddyNotifications', 'true');
+            addChatBubble("Great! I'll notify you 10 minutes before each class starts.", 'bot');
+            startNotificationWatcher();
+        } else {
+             addChatBubble("No problem. If you change your mind, just open settings again.", 'bot');
+             notificationsEnabled = false;
+             localStorage.setItem('classBuddyNotifications', 'false');
+        }
+    } else if (Notification.permission === 'granted') {
+        notificationsEnabled = notificationsToggleSwitch.checked;
+        localStorage.setItem('classBuddyNotifications', notificationsEnabled.toString());
+        if (notificationsEnabled) {
+            addChatBubble("Notifications are back on!", 'bot');
+            startNotificationWatcher();
+        } else {
+            addChatBubble("Notifications paused. I won't send you any more reminders.", 'bot');
+            stopNotificationWatcher();
+        }
+    }
+    updateSettingsModalState();
+};
+
+// --- DATA MANAGEMENT FUNCTIONS ---
+const exportData = () => {
+    const dataToExport = {
+        version: '1.5.3',
+        exportedAt: new Date().toISOString(),
+        schedule: schedule,
+        subjectColors: subjectColors,
+        settings: {
+            notificationsEnabled: notificationsEnabled,
+            theme: localStorage.getItem('classBuddyTheme') || 'light',
+        }
+    };
+    const dataStr = JSON.stringify(dataToExport, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const date = new Date().toISOString().slice(0, 10);
+    a.download = `classbuddy_backup_${date}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    addChatBubble("Your data has been exported! Keep the file safe.", 'bot');
+};
+
+const importData = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/json,.json';
+    input.onchange = e => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = readerEvent => {
+            try {
+                const importedData = JSON.parse(readerEvent.target.result);
+                if (importedData && importedData.schedule) {
+                    if (confirm('This will overwrite your current schedule and settings. Are you sure?')) {
+                        schedule = importedData.schedule;
+                        subjectColors = importedData.subjectColors || {};
+                        
+                        // Import settings
+                        const theme = importedData.settings?.theme || 'light';
+                        localStorage.setItem('classBuddyTheme', theme);
+                        applyTheme(theme);
+                        
+                        const notifEnabled = importedData.settings?.notificationsEnabled || false;
+                        notificationsEnabled = notifEnabled && Notification.permission === 'granted';
+                        localStorage.setItem('classBuddyNotifications', notificationsEnabled.toString());
+                        
+                        // Re-initialize things that depend on the new data
+                        saveSubjectColors();
+                        saveSchedule(); // this also calls renderSchedule
+                        if (notificationsEnabled) {
+                            startNotificationWatcher();
+                        } else {
+                            stopNotificationWatcher();
+                        }
+                        addChatBubble("✅ Data imported successfully! Your schedule has been updated.", 'bot');
+                        closeSettingsModal();
+                    }
+                } else {
+                    throw new Error('Invalid file structure.');
+                }
+            } catch (error) {
+                console.error("Failed to import data:", error);
+                addChatBubble("❌ Oops! The selected file is not a valid ClassBuddy backup.", 'bot');
+            }
+        };
+        reader.readAsText(file);
+    };
+    input.click();
+};
+
+// --- LOCAL STORAGE & SCHEDULE DATA ---
+const saveSchedule = () => {
+    localStorage.setItem('classBuddySchedule', JSON.stringify(schedule));
+    renderSchedule();
+    if (currentView === 'day') {
+        renderTimelineView();
+    }
+};
+
+const loadSchedule = () => {
+    const savedSchedule = localStorage.getItem('classBuddySchedule');
+    if (savedSchedule) {
+        schedule = JSON.parse(savedSchedule);
+        // Data migration: ensure tasks array exists for older schedules
+        Object.values(schedule).forEach(daySchedule => {
+            if (Array.isArray(daySchedule)) {
+                daySchedule.forEach(session => {
+                    if (!session.tasks) {
+                        session.tasks = [];
+                    }
+                });
+            }
+        });
+    } else {
+        schedule = {
+            Monday: [
+                { start: '08:15', end: '09:45', subject: 'ประวัติศาสตร์(7)', isFlipped: true, tasks: [] },
+                { start: '09:50', end: '16:00', subject: 'กิจกรรมพัฒนาผู้เรียน', tasks: [] },
+            ],
+            Tuesday: [
+                { start: '07:45', end: '08:15', subject: 'Homeroom', tasks: []},
+                { start: '08:15', end: '09:00', subject: 'สุขศึกษา7', tasks: [] },
+                { start: '09:00', end: '09:45', subject: 'พลศึกษา7', tasks: [] },
+                { start: '09:50', end: '11:20', subject: 'การออกแบบสื่อมัลติมีเดีย', tasks: [] },
+                { start: '12:55', end: '14:25', subject: 'อังกฤษฟัง-พูดเพื่อสื่อสาร 1', tasks: [] },
+                { start: '14:30', end: '16:00', subject: 'ภาษาอังกฤษ 7', tasks: [] },
+            ],
+            Wednesday: [
+                { start: '08:15', end: '09:45', subject: 'การงานอาชีพ(4) (คอมพิวเตอร์)', isFlipped: true, tasks: [] },
+                { start: '09:50', end: '11:20', subject: 'คณิตศาสตร์ 7', tasks: [] },
+                { start: '12:55', end: '14:25', subject: 'วิทยาศาสตร์กายภาพ 1', tasks: [] },
+                { start: '14:30', end: '16:00', subject: 'การออกแบบกราฟิกคอมพิวเตอร์ 1', tasks: [] },
+            ],
+            Thursday: [
+                { start: '08:15', end: '09:45', subject: 'ศิลปะ 7 (ดนตรี)', isFlipped: true, tasks: [] },
+                { start: '09:50', end: '11:20', subject: 'คณิตศาสตร์เพิ่มเติม(1)', tasks: [] },
+                { start: '12:55', end: '13:40', subject: 'กิจกรรมพัฒนาความคิดและจิตใจ', tasks: [] },
+                { start: '13:40', end: '16:00', subject: 'พื้นฐานการเขียนโปรแกรมคอมพิวเตอร์', tasks: [] },
+            ],
+            Friday: [
+                { start: '08:15', end: '09:45', subject: 'ภาษาไทย 7', tasks: [] },
+                { start: '09:50', end: '11:20', subject: 'สังคมศึกษา ศาสนาและวัฒนธรรม 7', tasks: [] },
+                { start: '12:55', end: '14:25', subject: 'การออกแบบกราฟิกคอมพิวเตอร์ 1', tasks: [] },
+                { start: '14:30', end: '16:00', subject: 'คณิตศาสตร์เพิ่มเติม(1)', tasks: [] },
+            ],
+            Saturday: [], 
+            Sunday: [],
+        };
+        saveSchedule();
+    }
+};
+
+// --- SUBJECT COLOR FUNCTIONS ---
+const simpleHash = (str) => {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash |= 0; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+};
+
+const getContrastingTextColor = (hex) => {
+    if (!hex) return '#ffffff';
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    return luminance > 0.5 ? '#000000' : '#ffffff';
+};
+
+const saveSubjectColors = () => {
+    localStorage.setItem('classBuddySubjectColors', JSON.stringify(subjectColors));
+};
+
+const loadSubjectColors = () => {
+    const savedColors = localStorage.getItem('classBuddySubjectColors');
+    subjectColors = savedColors ? JSON.parse(savedColors) : {};
+     // Auto-assign colors for any subjects that don't have one
+    Object.values(schedule).flat().forEach(cls => {
+        if (cls.subject && !subjectColors[cls.subject]) {
+             getSubjectColor(cls.subject); // This will generate and save a color
+        }
+    });
+};
+
+const getSubjectColor = (subject) => {
+    if (!subject) return 'transparent';
+    if (!subjectColors[subject]) {
+        const hash = simpleHash(subject);
+        const color = PALETTE[hash % PALETTE.length];
+        subjectColors[subject] = color;
+        saveSubjectColors();
+    }
+    return subjectColors[subject];
+};
+
+
+// --- RENDER FUNCTIONS ---
+const renderSchedule = () => {
+    scheduleGrid.innerHTML = '';
+    DAYS_OF_WEEK.filter(day => day !== 'Sunday' && day !== 'Saturday').forEach(day => {
+        const dayClasses = schedule[day] || [];
+        dayClasses.sort((a, b) => a.start.localeCompare(b.start));
+        const card = document.createElement('div');
+        card.className = 'schedule-card p-4 sm:p-6 rounded-2xl';
+        let classesHtml = `<p class="text-secondary">No classes scheduled.</p>`;
+        if (dayClasses.length > 0) {
+            classesHtml = dayClasses.map((cls, index) => {
+                const pendingTasksCount = cls.tasks ? cls.tasks.filter(t => !t.completed).length : 0;
+                const subjectColor = getSubjectColor(cls.subject);
+                const subjectDisplay = `
+                    <div class="flex items-center">
+                        <span class="font-medium text-primary">${cls.subject}</span>
+                        ${cls.isFlipped ? `<span class="badge ml-2 text-xs font-semibold px-2 py-0.5 rounded-full">Flipped</span>` : ''}
+                    </div>
+                `;
+                
+                return `
+                    <div class="class-item-container" data-day="${day}" data-index="${index}" style="border-color: ${subjectColor};">
+                        <div class="flex justify-between items-center py-2 border-b last:border-b-0" style="border-color: rgba(var(--border-color-rgb, 209, 209, 214), 0.2)">
+                            ${subjectDisplay}
+                            <span class="text-sm bg-alt text-primary font-medium px-2.5 py-1 rounded-md whitespace-nowrap">${cls.start} - ${cls.end}</span>
+                        </div>
+                        ${pendingTasksCount > 0 ? `<span class="task-badge">${pendingTasksCount}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+        card.innerHTML = `<h3 class="font-bold text-xl text-primary mb-4">${day}</h3><div class="space-y-1">${classesHtml}</div>`;
+        scheduleGrid.appendChild(card);
+    });
+};
+
+const updateScrollHint = () => {
+    if (!timelineView) return;
+    // Use requestAnimationFrame to ensure layout is calculated
+    requestAnimationFrame(() => {
+        const isScrollable = timelineView.scrollWidth > timelineView.clientWidth;
+        timelineView.classList.toggle('is-scrollable', isScrollable);
+    });
+};
+
+const renderTimelineView = () => {
+    const todayName = DAYS_OF_WEEK[new Date().getDay()];
+    const todaySchedule = (schedule[todayName] || []).filter(c => c.start && c.end).sort((a,b) => a.start.localeCompare(b.start));
+    timelineView.innerHTML = '';
+
+    if (todaySchedule.length === 0) {
+        timelineView.innerHTML = `<p class="text-secondary text-center py-8">No classes scheduled for today. Enjoy your day! 🎉</p>`;
+        updateScrollHint();
+        return;
+    }
+
+    const timeToMinutes = (timeStr) => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const startHour = Math.floor(timeToMinutes(todaySchedule[0].start) / 60);
+    const endHour = Math.ceil(timeToMinutes(todaySchedule[todaySchedule.length - 1].end) / 60);
+    const timelineStartMinutes = startHour * 60;
+    const timelineEndMinutes = endHour * 60;
+    const totalDuration = timelineEndMinutes - timelineStartMinutes;
+    
+    const container = document.createElement('div');
+    container.className = 'timeline-container';
+    container.style.minWidth = `${(endHour - startHour) * 70}px`; // Give more space for readability
+
+    // Create hour labels and grid
+    const hoursWrapper = document.createElement('div');
+    hoursWrapper.className = 'timeline-hours';
+    const gridWrapper = document.createElement('div');
+    gridWrapper.className = 'timeline-grid';
+
+    for (let i = startHour; i <= endHour; i++) {
+        const hourLabel = document.createElement('span');
+        hourLabel.textContent = `${i % 12 === 0 ? 12 : i % 12}${i < 12 ? 'am' : 'pm'}`;
+        hoursWrapper.appendChild(hourLabel);
+        const gridLine = document.createElement('div');
+        gridLine.className = 'timeline-grid-line';
+        gridWrapper.appendChild(gridLine);
+    }
+    
+    container.appendChild(hoursWrapper);
+    container.appendChild(gridWrapper);
+
+    // Create class blocks
+    todaySchedule.forEach(cls => {
+        const startMinutes = timeToMinutes(cls.start);
+        const endMinutes = timeToMinutes(cls.end);
+
+        const left = ((startMinutes - timelineStartMinutes) / totalDuration) * 100;
+        const width = ((endMinutes - startMinutes) / totalDuration) * 100;
+        
+        if (width <= 0) return;
+
+        const block = document.createElement('div');
+        const subjectColor = getSubjectColor(cls.subject);
+        const textColor = getContrastingTextColor(subjectColor);
+
+        block.className = 'timeline-class-block';
+        block.style.left = `${left}%`;
+        block.style.width = `${width}%`;
+        block.style.backgroundColor = subjectColor;
+        block.style.color = textColor;
+        block.title = `${cls.subject} (${cls.start} - ${cls.end})`;
+
+        block.innerHTML = `
+            <span class="timeline-class-subject truncate">${cls.subject}</span>
+            <span class="text-xs opacity-80">${cls.start} - ${cls.end}</span>
+        `;
+        container.appendChild(block);
+    });
+    
+    // Create time indicator
+    const timeIndicator = document.createElement('div');
+    timeIndicator.id = 'time-indicator';
+    timeIndicator.className = 'timeline-time-indicator';
+    container.appendChild(timeIndicator);
+
+    timelineView.appendChild(container);
+
+    updateTimeIndicator();
+    updateScrollHint();
+};
+
+const updateTimeIndicator = () => {
+    const indicator = document.getElementById('time-indicator');
+    if (!indicator || currentView !== 'day') return;
+
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const todayName = DAYS_OF_WEEK[now.getDay()];
+    const todaySchedule = (schedule[todayName] || []).filter(c => c.start && c.end).sort((a,b) => a.start.localeCompare(b.start));
+    if (todaySchedule.length === 0) return;
+
+    const timeToMinutes = (timeStr) => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return h * 60 + m;
+    };
+
+    const startHour = Math.floor(timeToMinutes(todaySchedule[0].start) / 60);
+    const endHour = Math.ceil(timeToMinutes(todaySchedule[todaySchedule.length - 1].end) / 60);
+    const timelineStartMinutes = startHour * 60;
+    const timelineEndMinutes = endHour * 60;
+    const totalDuration = timelineEndMinutes - timelineStartMinutes;
+
+    if (nowMinutes >= timelineStartMinutes && nowMinutes <= timelineEndMinutes) {
+        const left = ((nowMinutes - timelineStartMinutes) / totalDuration) * 100;
+        indicator.style.left = `${left}%`;
+        indicator.style.display = 'block';
+    } else {
+        indicator.style.display = 'none';
+    }
+};
+
+const switchView = (view) => {
+    currentView = view;
+
+    if (view === 'week') {
+        weekViewBtn.classList.add('active');
+        dayViewBtn.classList.remove('active');
+        scheduleGrid.classList.remove('hidden');
+        timelineView.classList.add('hidden');
+        if (timeIndicatorInterval) clearInterval(timeIndicatorInterval);
+        timeIndicatorInterval = null;
+    } else {
+        weekViewBtn.classList.remove('active');
+        dayViewBtn.classList.add('active');
+        scheduleGrid.classList.add('hidden');
+        timelineView.classList.remove('hidden');
+        renderTimelineView();
+        if (timeIndicatorInterval) clearInterval(timeIndicatorInterval);
+        timeIndicatorInterval = setInterval(updateTimeIndicator, 60000); // Update every minute
+    }
+};
+
+const renderSuggestions = (suggestions) => {
+    if (!chatSuggestionsContainer) return;
+    chatSuggestionsContainer.innerHTML = '';
+    if (suggestions.length === 0) return;
+
+    suggestions.forEach(suggestion => {
+        const pill = document.createElement('button');
+        pill.className = 'suggestion-pill';
+        pill.type = 'button'; // Prevent default form submission
+        pill.textContent = suggestion;
+        pill.addEventListener('click', () => {
+            questionInput.value = suggestion;
+            qaForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            chatSuggestionsContainer.innerHTML = ''; // Hide after click
+        });
+        chatSuggestionsContainer.appendChild(pill);
+    });
+};
+
+// --- EDIT FORM FUNCTIONS ---
+const renderEditForm = () => {
+    if (!scheduleInputsContainer) return;
+    scheduleInputsContainer.innerHTML = '';
+
+    DAYS_OF_WEEK.filter(day => day !== 'Sunday' && day !== 'Saturday').forEach(day => {
+        const dayContainer = document.createElement('div');
+        dayContainer.className = 'mb-6 p-4 rounded-lg border border-default';
+        dayContainer.innerHTML = `<h4 class="text-lg font-bold text-primary mb-3">${day}</h4>`;
+
+        const classesContainer = document.createElement('div');
+        classesContainer.className = 'space-y-3';
+        
+        (schedule[day] || []).forEach((session, index) => {
+            const classRow = document.createElement('div');
+            classRow.className = 'edit-class-row'; // Use the new grid-based class
+
+            classRow.innerHTML = `
+                <div class="edit-class-row-time">
+                    <input type="time" data-day="${day}" data-index="${index}" data-field="start" value="${session.start}" class="form-input w-full">
+                    <span class="text-secondary hidden sm:inline">-</span>
+                    <input type="time" data-day="${day}" data-index="${index}" data-field="end" value="${session.end}" class="form-input w-full">
+                </div>
+                <div class="edit-class-row-subject">
+                    <input type="color" class="subject-color-picker" value="${getSubjectColor(session.subject)}" data-subject="${session.subject}" title="Change subject color">
+                    <input type="text" placeholder="Subject Name" data-day="${day}" data-index="${index}" data-field="subject" value="${session.subject}" class="form-input w-full">
+                </div>
+                <div class="edit-class-row-controls">
+                    <label class="flex items-center cursor-pointer" title="Mark as Flipped Classroom">
+                        <span class="text-sm text-secondary mr-2">Flipped</span>
+                        <div class="relative">
+                            <input type="checkbox" data-day="${day}" data-index="${index}" data-field="isFlipped" class="sr-only peer" ${session.isFlipped ? 'checked' : ''}>
+                            <div class="toggle-bg block w-11 h-6 rounded-full"></div>
+                            <div class="toggle-dot absolute left-0.5 top-0.5 bg-white w-5 h-5 rounded-full"></div>
+                        </div>
+                    </label>
+                    <button data-day="${day}" data-index="${index}" data-action="remove" class="remove-btn" aria-label="Remove class">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                    </button>
+                </div>
+            `;
+            classesContainer.appendChild(classRow);
+        });
+        
+        dayContainer.appendChild(classesContainer);
+
+        const addButton = document.createElement('button');
+        addButton.dataset.day = day;
+        addButton.dataset.action = 'add';
+        addButton.className = 'add-class-day-btn mt-4';
+        addButton.textContent = `+ Add Class to ${day}`;
+        dayContainer.appendChild(addButton);
+
+        scheduleInputsContainer.appendChild(dayContainer);
+    });
+};
+
+const handleScheduleEdit = (e) => {
+    const target = e.target;
+    const interactiveElement = target.closest('[data-day], [data-subject]');
+    if (!interactiveElement) return;
+
+    // Handle color picker change
+    if (target.matches('.subject-color-picker')) {
+         const subject = target.dataset.subject;
+         if(subject) {
+             subjectColors[subject] = target.value;
+             saveSubjectColors();
+             renderSchedule(); // Re-render week view to show new color border
+             if (currentView === 'day') renderTimelineView(); // Also re-render timeline view
+         }
+         return; // Stop here for color changes
+    }
+
+    const { day, index, field, action } = interactiveElement.dataset;
+
+    // Handle button clicks (add/remove)
+    if (action) {
+        const daySchedule = schedule[day] || [];
+        if (action === 'remove' && index) {
+            daySchedule.splice(parseInt(index, 10), 1);
+        } else if (action === 'add') {
+            daySchedule.push({ start: '09:00', end: '10:00', subject: 'New Class', isFlipped: false, tasks: [] });
+        }
+        schedule[day] = daySchedule;
+        saveSchedule();
+        renderEditForm(); // Re-render to reflect changes
+        return;
+    }
+
+    // Handle input changes (time, subject, flipped)
+    if (field && day && index) {
+        const session = schedule[day]?.[parseInt(index, 10)];
+        if(session) {
+            const inputElement = target;
+            const oldValue = session[field];
+            const newValue = inputElement.type === 'checkbox' ? inputElement.checked : inputElement.value;
+            session[field] = newValue;
+            
+            // If subject name changed, update color map and re-render form
+            if (field === 'subject' && oldValue !== newValue) {
+                if (subjectColors[oldValue] && !subjectColors[newValue]) {
+                    subjectColors[newValue] = subjectColors[oldValue];
+                }
+                getSubjectColor(newValue); // Ensure new subject has a color
+                renderEditForm(); // Re-render form to update color picker's data-subject
+            }
+            
+            saveSchedule(); // Save on every input change
+        }
+    }
+};
+
+const toggleEditForm = () => {
+    const isHidden = editScheduleForm.classList.toggle('hidden');
+    if (!isHidden) {
+        switchView('week'); // Force week view for editing
+        renderEditForm();
+        editScheduleToggleBtn.textContent = 'Done';
+        editScheduleToggleBtn.classList.add('bg-accent', 'text-on-accent', 'border-transparent');
+    } else {
+        editScheduleToggleBtn.textContent = 'Edit';
+        editScheduleToggleBtn.classList.remove('bg-accent', 'text-on-accent', 'border-transparent');
+    }
+};
+
+// --- TASK MANAGEMENT FUNCTIONS ---
+const renderTaskModal = (day, classIndex) => {
+    const cls = schedule[day]?.[classIndex];
+    if (!cls || !taskModalContent) return;
+
+    const tasksHtml = (cls.tasks || []).map((task, taskIndex) => `
+        <div class="task-item">
+            <input type="checkbox" class="task-item-checkbox" data-day="${day}" data-class-index="${classIndex}" data-task-index="${taskIndex}" ${task.completed ? 'checked' : ''} aria-label="${task.text}">
+            <p class="task-item-text flex-grow ${task.completed ? 'is-completed' : ''}">${task.text}</p>
+            <button class="task-delete-btn" data-day="${day}" data-class-index="${classIndex}" data-task-index="${taskIndex}" aria-label="Delete task">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+            </button>
+        </div>
+    `).join('');
+
+    taskModalContent.innerHTML = `
+        <div class="p-5 sm:p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h3 class="text-lg font-bold text-primary">${cls.subject}</h3>
+                    <p class="text-sm text-secondary">${day}, ${cls.start} - ${cls.end}</p>
+                </div>
+                <button id="task-modal-close-btn" class="p-2 -mr-2 -mt-2 rounded-full text-secondary hover:bg-alt" aria-label="Close">
+                   <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                </button>
+            </div>
+
+            <div id="task-list" class="max-h-64 overflow-y-auto pr-2 -mr-2 mb-4">
+                ${(cls.tasks || []).length > 0 ? tasksHtml : `<p class="text-center text-secondary py-4">No tasks yet. Add one below!</p>`}
+            </div>
+
+            <form id="add-task-form" data-day="${day}" data-class-index="${classIndex}" class="flex items-center gap-2 sm:gap-3">
+                <input type="text" id="add-task-input" placeholder="Add a new task..." class="flex-grow p-3 border border-default rounded-xl focus:ring-2 ring-accent focus:border-transparent transition w-full bg-alt placeholder:text-secondary" required autocomplete="off">
+                <button type="submit" class="bg-accent text-on-accent font-semibold py-3 px-4 rounded-xl hover:bg-accent-hover transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ring-accent flex-shrink-0">
+                    Add
+                </button>
+            </form>
+        </div>
+    `;
+    
+    // Re-attach event listeners for the new content
+    document.getElementById('task-modal-close-btn').addEventListener('click', closeTaskModal);
+    document.getElementById('add-task-form').addEventListener('submit', handleAddTask);
+    taskModalContent.addEventListener('click', handleTaskItemClick);
+};
+
+const openTaskModal = (day, classIndex) => {
+    renderTaskModal(day, classIndex);
+    taskModal.classList.remove('hidden');
+    setTimeout(() => {
+        taskModal.classList.add('is-open');
+        taskModalContent.classList.add('opacity-100', 'scale-100');
+        taskModalContent.classList.remove('opacity-0', 'scale-95');
+    }, 10);
+    document.body.style.overflow = 'hidden'; // Prevent background scrolling
+};
+
+const closeTaskModal = () => {
+    taskModal.classList.remove('is-open');
+    taskModalContent.classList.remove('opacity-100', 'scale-100');
+    taskModalContent.classList.add('opacity-0', 'scale-95');
+    setTimeout(() => {
+        taskModal.classList.add('hidden');
+        taskModalContent.innerHTML = '';
+        document.body.style.overflow = '';
+    }, 200); // Match transition duration
+};
+
+const handleTaskItemClick = (e) => {
+    const checkbox = e.target.closest('.task-item-checkbox');
+    const deleteBtn = e.target.closest('.task-delete-btn');
+    
+    if (!checkbox && !deleteBtn) return;
+    
+    const { day, classIndex, taskIndex } = (checkbox || deleteBtn).dataset;
+    const cls = schedule[day]?.[classIndex];
+    if (!cls) return;
+
+    if (checkbox) {
+        cls.tasks[taskIndex].completed = checkbox.checked;
+    } else if (deleteBtn) {
+        cls.tasks.splice(taskIndex, 1);
+    }
+    
+    saveSchedule();
+    renderTaskModal(day, classIndex);
+};
+
+const handleAddTask = (e) => {
+    e.preventDefault();
+    const form = e.target;
+    const input = form.querySelector('#add-task-input');
+    const { day, classIndex } = form.dataset;
+    const taskText = input.value.trim();
+
+    if (taskText && day && classIndex) {
+        const cls = schedule[day][classIndex];
+        if (!cls.tasks) cls.tasks = [];
+        cls.tasks.push({ text: taskText, completed: false });
+        saveSchedule();
+        renderTaskModal(day, classIndex);
+        input.value = '';
+        input.focus();
+    }
+};
+
+// --- OFFLINE Q&A LOGIC (BILINGUAL) ---
+const processQuestionOffline = (query) => {
+    const lowerQuery = query.toLowerCase().trim().replace(/[?.,]/g, '');
+    const isThaiQuery = THAI_REGEX.test(lowerQuery);
+    const now = new Date();
+    const todayName = DAYS_OF_WEEK[now.getDay()];
+    const nowTime = now.toTimeString().substring(0, 5);
+    
+    const getResponse = (eng, thai) => isThaiQuery ? thai : eng;
+
+    // --- NLP HELPER FUNCTIONS ---
+    const extractTimeContext = () => {
+        for (const [keyword, context] of Object.entries(TIME_CONTEXT_MAP)) {
+            if (lowerQuery.includes(keyword)) return context;
+        }
+        return null;
+    };
+
+    const extractDay = () => {
+        for (const [keyword, day] of Object.entries(DAY_KEYWORD_MAP)) {
+            if (lowerQuery.includes(keyword)) {
+                if (day === 'today') return todayName;
+                if (day === 'tomorrow') return DAYS_OF_WEEK[(now.getDay() + 1) % 7];
+                if (day === 'yesterday') return DAYS_OF_WEEK[(now.getDay() + 6) % 7];
+                return day;
+            }
+        }
+        return null;
+    };
+
+    const extractSubject = () => {
+        for (const [keyword, subject] of Object.entries(SUBJECT_KEYWORD_MAP)) {
+            if (lowerQuery.includes(keyword)) return subject;
+        }
+        return null;
+    };
+
+     // --- TASK/HOMEWORK INTENT ---
+    const taskKeywords = ['homework', 'task', 'assignment', 'due', 'การบ้าน', 'งาน', 'ต้องทำ', 'ต้องส่ง'];
+    if (taskKeywords.some(k => lowerQuery.includes(k))) {
+        const targetDay = extractDay();
+        const targetSubject = extractSubject();
+        const isUnfinishedQuery = lowerQuery.includes('unfinished') || lowerQuery.includes('pending') || lowerQuery.includes('ยังไม่เสร็จ');
+        let tasksFound = [];
+
+        const daysToSearch = targetDay ? [targetDay] : DAYS_OF_WEEK.slice(1, 6); // Mon-Fri if no day specified
+
+        daysToSearch.forEach(day => {
+            (schedule[day] || []).forEach(cls => {
+                if (targetSubject && cls.subject !== targetSubject) return;
+                if (!cls.tasks || cls.tasks.length === 0) return;
+
+                cls.tasks.forEach(task => {
+                    if (isUnfinishedQuery && task.completed) return;
+                    tasksFound.push({ day, subject: cls.subject, text: task.text, completed: task.completed });
+                });
+            });
+        });
+
+        if (tasksFound.length === 0) {
+            let responseEng = isUnfinishedQuery ? "You have no pending tasks" : "No tasks found";
+            let responseThai = isUnfinishedQuery ? "ไม่มีงานค้างเลย" : "ไม่พบงาน";
+            if (targetSubject) {
+                responseEng += ` for ${targetSubject}`;
+                responseThai += `สำหรับวิชา ${targetSubject}`;
+            }
+            if (targetDay) {
+                responseEng += ` on ${targetDay}`;
+                responseThai += `ใน${ENG_TO_THAI_DAY_MAP[targetDay] || targetDay}`;
+            }
+            return getResponse(responseEng + ".", responseThai + "นะ");
+        }
+
+        let response = getResponse("Here are your tasks:", "นี่คือรายการงานของเธอ:");
+        const groupedTasks = tasksFound.reduce((acc, task) => {
+            const key = `${task.day} - ${task.subject}`;
+            if (!acc[key]) {
+                acc[key] = { day: task.day, subject: task.subject, tasks: [] };
+            }
+            acc[key].tasks.push(task);
+            return acc;
+        }, {});
+
+        for (const groupKey in groupedTasks) {
+            const group = groupedTasks[groupKey];
+            const dayDisplay = getResponse(group.day, ENG_TO_THAI_DAY_MAP[group.day]);
+            response += `\n\n**${group.subject} (${dayDisplay})**`;
+            group.tasks.forEach(task => {
+                const status = task.completed ? getResponse(' (Done)', ' (เสร็จแล้ว)') : '';
+                response += `\n- ${task.text}${isUnfinishedQuery ? '' : status}`;
+            });
+        }
+        return response;
+    }
+
+    const targetDay = extractDay();
+    const targetSubject = extractSubject();
+    const timeContext = extractTimeContext();
+    const dayToQuery = targetDay || todayName;
+    const dayDisplay = isThaiQuery ? ENG_TO_THAI_DAY_MAP[dayToQuery] : dayToQuery;
+    
+    let daySchedule = (schedule[dayToQuery] || []).slice().sort((a,b) => a.start.localeCompare(b.start));
+
+    // Pre-filter schedule based on time context (morning, afternoon, etc.)
+    if (timeContext) {
+        daySchedule = daySchedule.filter(c => c.start >= timeContext.start && c.start < timeContext.end);
+        if (daySchedule.length === 0) {
+            return getResponse(`You have no classes in the ${timeContext.eng} on ${dayToQuery}.`, `ไม่มีเรียน${timeContext.thai}ใน${dayDisplay}`);
+        }
+    }
+
+    // --- INTENT HANDLING (SAME AS BEFORE) ---
+    const casualResponses = {
+        'skip|โดด|โดดเรียน': getResponse(`I can't officially recommend that, but I can tell you what you'd be missing!`, `ไม่แนะนำอย่างเป็นทางการนะ แต่บอกให้ได้ว่าจะพลาดอะไรไปบ้าง`),
+        'survivable|pain|suffer|ruin|cry|รอดไหม|เหนื่อยมั้ย': getResponse(`You've got this! Just take it one class at a time. Your first class today is **${(schedule[todayName] || [])[0]?.subject || 'nothing, you are free!'}**.`, `สู้ๆ! เดี๋ยวก็หมดวันแล้ว ค่อยๆ ไปทีละคาบนะ คาบแรกของวันนี้คือ **${(schedule[todayName] || [])[0]?.subject || 'ไม่มีเรียน ว่างจ้า!'}**`),
+        'sleep|nap time|ง่วง|นอน': getResponse(`Your schedule says official nap time is after your last class! The last class today ends at **${daySchedule.slice().pop()?.end || 'N/A'}**.`, `เวลานอนหลับอย่างเป็นทางการคือหลังคาบสุดท้ายนะ! วันนี้คาบสุดท้ายเลิก **${daySchedule.slice().pop()?.end || 'ไม่มี'}**`),
+        'escape|go home|get out|leave|กลับบ้าน': getResponse(`Freedom is scheduled for **${daySchedule.slice().pop()?.end || 'anytime you want'}** today, after **${daySchedule.slice().pop()?.subject || 'an empty schedule'}**.`, `กลับบ้านได้ตอน **${daySchedule.slice().pop()?.end || 'ว่างแล้ว กลับได้เลย'}** วันนี้ หลังเรียนวิชา **${daySchedule.slice().pop()?.subject || 'ไม่มีเรียน'}** จบ`),
+        'fun|chill|boring|long one|น่าเบื่อ|ยาวนาน': getResponse(`That's subjective, but I can show you the schedule and you can decide for yourself!`, `อันนี้แล้วแต่คนเลย เดี๋ยวเปิดตารางให้ดู แล้วตัดสินใจเองนะ!`),
+    };
+    for (const [keywords, response] of Object.entries(casualResponses)) {
+        if (keywords.split('|').some(k => lowerQuery.includes(k))) return response;
+    }
+    if (lowerQuery.includes('full schedule') || lowerQuery.includes('weekly schedule') || lowerQuery.includes('all week') || lowerQuery.includes('ทั้งสัปดาห์') || lowerQuery.includes('ทั้งอาทิตย์')) {
+        let fullScheduleStr = getResponse("Here's your full weekly schedule:", "นี่คือตารางสอนทั้งสัปดาห์ของเธอ:");
+        for (const day of DAYS_OF_WEEK.slice(1, 6)) {
+            const classes = schedule[day] || [];
+            fullScheduleStr += `\n\n**${getResponse(day, ENG_TO_THAI_DAY_MAP[day])}**`;
+            if (classes.length === 0) {
+                fullScheduleStr += getResponse(`\n- No classes!`, `\n- ไม่มีเรียน!`);
+            } else {
+                classes.forEach(c => {
+                    fullScheduleStr += `\n- ${c.subject} (${c.start} - ${c.end})${c.isFlipped ? ' (Flipped)' : ''}`;
+                });
+            }
+        }
+        return fullScheduleStr;
+    }
+    const timeMatch = lowerQuery.match(/(\d{1,2})(?::(\d{2}))?(?:\s*(am|pm|โมง))?/);
+    if (timeMatch && (lowerQuery.includes(' at ') || lowerQuery.includes('ตอน'))) {
+        let hour = parseInt(timeMatch[1], 10);
+        const minute = parseInt(timeMatch[2] || '0', 10);
+        const period = timeMatch[3];
+        if (period === 'pm' && hour < 12) hour += 12;
+        if (period === 'am' && hour === 12) hour = 0;
+        const queryTime = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+        
+        const classAtTime = daySchedule.find(c => queryTime >= c.start && queryTime < c.end);
+        return classAtTime
+            ? getResponse(`At ${queryTime} on ${dayToQuery}, you have **${classAtTime.subject}**.`, `${dayDisplay} ตอน ${queryTime} มีเรียน **${classAtTime.subject}**`)
+            : getResponse(`You don't have any class scheduled at ${queryTime} on ${dayToQuery}.`, `${dayDisplay} ตอน ${queryTime} ไม่มีเรียนนะ`);
+    }
+    if (lowerQuery.includes('now') || lowerQuery.includes('ตอนนี้')) {
+        if(dayToQuery !== todayName) return getResponse(`I can only tell you what's happening 'now' for today. For ${dayToQuery}, please ask about a specific time.`, `บอกได้แค่ว่า 'ตอนนี้' เรียนอะไรสำหรับวันนี้เท่านั้นนะ ถ้าอยากรู้วันอื่น ให้ถามเวลาเจาะจงมาเลย`);
+        const currentClass = daySchedule.find(c => nowTime >= c.start && nowTime < c.end);
+        if(currentClass) return getResponse(`You are currently in **${currentClass.subject}**, which ends at ${currentClass.end}.`, `ตอนนี้กำลังเรียนวิชา **${currentClass.subject}** อยู่ เลิกตอน ${currentClass.end}`);
+        const nextClass = daySchedule.find(c => c.start > nowTime);
+        if(nextClass) return getResponse(`You're on a break. Your next class is **${nextClass.subject}** at ${nextClass.start}.`, `ตอนนี้พักอยู่ คาบต่อไปเรียน **${nextClass.subject}** ตอน ${nextClass.start}`);
+        return getResponse(`You're done for today! No more classes scheduled right now.`, `วันนี้เรียนเสร็จแล้ว! ไม่มีคาบเรียนแล้วจ้า`);
+    }
+    if ((lowerQuery.includes('next') || lowerQuery.includes('ถัดไป') || lowerQuery.includes('ต่อไป')) && !targetSubject) {
+        if(dayToQuery !== todayName) return getResponse(`I can only tell you the 'next' class for today.`, `บอก 'คาบต่อไป' ได้สำหรับวันนี้เท่านั้นนะ`);
+        const nextClass = daySchedule.find(c => c.start > nowTime);
+        return nextClass ? getResponse(`Your next class is **${nextClass.subject}** at ${nextClass.start}.`, `คาบต่อไปคือ **${nextClass.subject}** ตอน ${nextClass.start}`) : getResponse(`You have no more classes scheduled for today.`, `วันนี้ไม่มีเรียนแล้ว`);
+    }
+    const timeContextString = timeContext ? getResponse(` in the ${timeContext.eng}`, `ใน${timeContext.thai}`) : '';
+    if (lowerQuery.includes('first') || lowerQuery.includes('แรก')) return daySchedule.length > 0 ? getResponse(`Your first class${timeContextString} on ${dayToQuery} is **${daySchedule[0].subject}** at ${daySchedule[0].start}.`, `คาบแรก${timeContextString}ของ${dayDisplay}คือ **${daySchedule[0].subject}** ตอน ${daySchedule[0].start}`) : getResponse(`You have no classes${timeContextString} on ${dayToQuery}.`, `ไม่มีเรียน${timeContextString}ใน${dayDisplay}`);
+    if (lowerQuery.includes('last') || lowerQuery.includes('สุดท้าย')) return daySchedule.length > 0 ? getResponse(`Your last class${timeContextString} on ${dayToQuery} is **${daySchedule[daySchedule.length-1].subject}**, ending at ${daySchedule[daySchedule.length-1].end}.`, `คาบสุดท้าย${timeContextString}ของ${dayDisplay}คือ **${daySchedule[daySchedule.length-1].subject}** เลิกตอน ${daySchedule[daySchedule.length-1].end}`) : getResponse(`You have no classes${timeContextString} on ${dayToQuery}.`, `ไม่มีเรียน${timeContextString}ใน${dayDisplay}`);
+    if (targetSubject && (lowerQuery.includes('after') || lowerQuery.includes('หลัง') || lowerQuery.includes('ต่อจาก'))) {
+        const classIndex = daySchedule.findIndex(c => c.subject === targetSubject);
+        if (classIndex === -1) return getResponse(`I couldn't find **${targetSubject}** on ${dayToQuery}.`, `หา **${targetSubject}** ในตารางของ${dayDisplay}ไม่เจอ`);
+        if (classIndex >= daySchedule.length - 1) return getResponse(`**${targetSubject}** is your last class on ${dayToQuery}.`, `**${targetSubject}** เป็นคาบสุดท้ายของ${dayDisplay}แล้ว`);
+        const nextClass = daySchedule[classIndex + 1];
+        return getResponse(`After **${targetSubject}**, you have **${nextClass.subject}** at ${nextClass.start}.`, `หลังวิชา **${targetSubject}** ก็จะเป็น **${nextClass.subject}** ตอน ${nextClass.start}`);
+    }
+    if (lowerQuery.includes('how many') || lowerQuery.includes('กี่วิชา') || lowerQuery.includes('กี่คาบ')) {
+        return getResponse(`You have **${daySchedule.length}** class blocks${timeContextString} on ${dayToQuery}.`, `มีเรียน **${daySchedule.length}** คาบ${timeContextString}ใน${dayDisplay}`);
+    }
+    if (targetSubject && (lowerQuery.includes('how long') || lowerQuery.includes('นานแค่ไหน') || lowerQuery.includes('นานมั้ย'))) {
+        const classInfo = daySchedule.find(c => c.subject === targetSubject);
+        if (!classInfo) return getResponse(`I couldn't find **${targetSubject}** on ${dayToQuery}.`, `หา **${targetSubject}** ในตารางของ${dayDisplay}ไม่เจอ`);
+        const start = new Date(`1970-01-01T${classInfo.start}`);
+        const end = new Date(`1970-01-01T${classInfo.end}`);
+        const duration = (end.getTime() - start.getTime()) / 60000; // in minutes
+        return getResponse(`**${targetSubject}** on ${dayToQuery} is **${duration} minutes** long.`, `วิชา **${targetSubject}** ใน${dayDisplay}เรียนนาน **${duration} นาที**`);
+    }
+    if (targetSubject) {
+        const classesOnDay = daySchedule.filter(c => c.subject === targetSubject);
+        if (classesOnDay.length > 0) {
+            const times = classesOnDay.map(c => `${c.start} - ${c.end}`).join(' and ');
+            return getResponse(`Yes, you have **${targetSubject}** on ${dayToQuery} from ${times}.`, `ใช่ มีเรียน **${targetSubject}** ใน${dayDisplay} ตอน ${times}`);
+        }
+        if (targetDay) {
+            return getResponse(`Nope, you do not have **${targetSubject}** on ${dayToQuery}.`, `ไม่มีเรียน **${targetSubject}** ใน${dayDisplay}`);
+        }
+
+        const weeklyOccurrences = [];
+        let dayIndex = now.getDay();
+        for(let i=0; i < 7; i++) {
+            const searchDay = DAYS_OF_WEEK[(dayIndex + i) % 7];
+            (schedule[searchDay] || []).forEach(c => {
+                if (c.subject === targetSubject) {
+                    if (searchDay === todayName && c.start < nowTime && (lowerQuery.includes('next') || lowerQuery.includes('ต่อไป') || lowerQuery.includes('ถัดไป'))) {
+                        return;
+                    }
+                    weeklyOccurrences.push({ day: searchDay, time: c.start });
+                }
+            });
+        }
+
+        if(weeklyOccurrences.length > 0) {
+            const firstOccurrence = weeklyOccurrences[0];
+            const nextClassString = getResponse(`on ${firstOccurrence.day} at ${firstOccurrence.time}`, `${ENG_TO_THAI_DAY_MAP[firstOccurrence.day]} ตอน ${firstOccurrence.time}`);
+            if (lowerQuery.includes('next') || lowerQuery.includes('ครั้งต่อไป') || lowerQuery.includes('ถัดไป') || lowerQuery.includes('ต่อไป')) {
+                return getResponse(`Your next **${targetSubject}** is ${nextClassString}.`, `คาบ **${targetSubject}** ครั้งต่อไปคือ ${nextClassString}`);
+            }
+            const allOccurrences = weeklyOccurrences.map(o => getResponse(`${o.day} at ${o.time}`, `${ENG_TO_THAI_DAY_MAP[o.day]} ตอน ${o.time}`)).join(', ');
+            return getResponse(`You have **${targetSubject}** on: ${allOccurrences}.`, `มีเรียน **${targetSubject}** ในวัน/เวลา: ${allOccurrences}`);
+        }
+        return getResponse(`I can't find **${targetSubject}** anywhere in your weekly schedule.`, `หา **${targetSubject}** ในตารางสอนไม่เจอเลย`);
+    }
+    if (targetDay) {
+        if (daySchedule.length === 0) return getResponse(`You have no classes scheduled for ${targetDay}. Enjoy your free day! 🎉`, `${dayDisplay}ไม่มีเรียนนะ พักผ่อนได้เลย! 🎉`);
+        const classList = daySchedule.map(c => `\n- **${c.subject}** (${c.start} - ${c.end})`).join('');
+        return getResponse(`On ${targetDay}, your schedule is:${classList}`, `ตารางเรียน${dayDisplay}คือ:${classList}`);
+    }
+
+    return getResponse(
+        "Sorry, I couldn't understand that. You can ask for a day's schedule (e.g., 'What's on Monday?'), ask about a class (e.g., 'Do I have Math today?'), or ask 'what's next?'.",
+        "ขอโทษนะ ไม่เข้าใจที่ถามเลย ลองถามเกี่ยวกับตารางเรียนดูสิ เช่น 'วันจันทร์เรียนอะไร?', 'มีเรียนคณิตไหม?', หรือ 'คาบต่อไปเรียนอะไร?'"
+    );
+};
+
+
+const handleQuestion = (question) => {
+    const answer = processQuestionOffline(question);
+    return answer.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+};
+
+// --- EVENT HANDLERS ---
+const updateSuggestions = () => {
+    const query = questionInput.value.trim();
+    const lowerQuery = query.toLowerCase();
+
+    if (query === '') {
+        renderSuggestions(CHAT_SUGGESTIONS);
+        return;
+    }
+
+    const suggestionsSet = new Set();
+    const isThaiQuery = THAI_REGEX.test(lowerQuery);
+
+    // 1. Detect keywords from input
+    const detectedSubjects = new Set();
+    Object.entries(SUBJECT_KEYWORD_MAP).forEach(([keyword, subject]) => {
+        if (lowerQuery.includes(keyword.toLowerCase())) {
+            detectedSubjects.add(subject);
+        }
+    });
+
+    const detectedDayKeywords = new Set();
+    Object.entries(DAY_KEYWORD_MAP).forEach(([keyword, day]) => {
+        if (lowerQuery.includes(keyword)) {
+            detectedDayKeywords.add(keyword);
+        }
+    });
+
+    const detectedTimeKeywords = new Set();
+    Object.entries(TIME_CONTEXT_MAP).forEach(([keyword, context]) => {
+        if (lowerQuery.includes(keyword)) {
+            detectedTimeKeywords.add(isThaiQuery ? context.thai : context.eng);
+        }
+    });
+
+    // 2. Generate dynamic suggestions based on detected keywords
+    if (detectedSubjects.size > 0) {
+        detectedSubjects.forEach(subject => {
+            const keywords = REVERSE_SUBJECT_KEYWORD_MAP[subject];
+            if (!keywords) return;
+            const engKeyword = keywords.eng.find(k => k.length > 2) || keywords.eng[0] || subject;
+            const thaiKeyword = keywords.thai[0] || subject;
+
+            if (detectedDayKeywords.size > 0 || detectedTimeKeywords.size > 0) {
+                const context = [...detectedDayKeywords, ...detectedTimeKeywords].join(' ');
+                suggestionsSet.add(`What time is ${engKeyword} ${context}?`);
+                suggestionsSet.add(`มีเรียน${thaiKeyword}${context}ไหม`);
+            } else {
+                suggestionsSet.add(`Do I have ${engKeyword} today?`);
+                suggestionsSet.add(`When is the next ${engKeyword} class?`);
+                suggestionsSet.add(`พรุ่งนี้มีเรียน${thaiKeyword}ไหม`);
+            }
+        });
+    } else if (detectedDayKeywords.size > 0) {
+        detectedDayKeywords.forEach(keyword => {
+            const day = DAY_KEYWORD_MAP[keyword];
+            const dayDisplayEng = day === 'today' ? 'today' : day.charAt(0).toUpperCase() + day.slice(1);
+            const dayDisplayThai = day === 'today' ? 'วันนี้' : ENG_TO_THAI_DAY_MAP[dayDisplayEng] || keyword;
+            suggestionsSet.add(`What is on ${dayDisplayEng}?`);
+            suggestionsSet.add(`ตารางเรียน${dayDisplayThai}`);
+        });
+    } else if (detectedTimeKeywords.size > 0) {
+        detectedTimeKeywords.forEach(time => {
+            suggestionsSet.add(`What's my schedule this ${time}?`);
+            suggestionsSet.add(`ตารางเรียน${isThaiQuery ? `ช่วง${time}`: time}`);
+        });
+    }
+
+    // 3. Add filtered static suggestions and merge
+    const filteredStatic = CHAT_SUGGESTIONS.filter(s => s.toLowerCase().includes(lowerQuery));
+    filteredStatic.forEach(s => suggestionsSet.add(s));
+
+    // Fallback to defaults if nothing generated
+    if (suggestionsSet.size === 0 && query.length > 2) {
+        renderSuggestions([]);
+    } else if (suggestionsSet.size > 0) {
+        renderSuggestions(Array.from(suggestionsSet).slice(0, 6));
+    } else {
+        renderSuggestions(CHAT_SUGGESTIONS);
+    }
+};
+
+
+qaForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const question = questionInput.value.trim();
+    if (!question) return;
+    addChatBubble(question, 'user');
+    questionInput.value = '';
+    renderSuggestions([]); // Clear suggestions on submit
+    
+    const answer = handleQuestion(question);
+    addChatBubble(answer.replace(/\n/g, '<br>'), 'bot');
+});
+
+weekViewBtn.addEventListener('click', () => switchView('week'));
+dayViewBtn.addEventListener('click', () => switchView('day'));
+
+
+// --- INITIALIZATION ---
+const init = () => {
+    // Theme initialization
+    const savedTheme = localStorage.getItem('classBuddyTheme');
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+
+    // Notification setup
+    if ('Notification' in window) {
+        const savedNotificationPref = localStorage.getItem('classBuddyNotifications');
+        if (savedNotificationPref === 'true' && Notification.permission === 'granted') {
+            notificationsEnabled = true;
+            startNotificationWatcher();
+        } else if (savedNotificationPref === 'false') {
+            notificationsEnabled = false;
+        }
+    } else {
+        if(settingsBtn) { // Hide settings related to notifications if not supported
+            const notificationSection = document.querySelector('#notifications-toggle-switch').closest('div.flex.items-center.justify-between');
+            if(notificationSection) notificationSection.parentElement.style.display = 'none';
+        }
+    }
+
+    // Add styles for the edit form
+    const style = document.createElement('style');
+    style.id = 'edit-form-styles';
+    style.textContent = `
+        .form-input { background-color: var(--bg-alt); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 0.5rem 0.75rem; color: var(--text-primary); transition: border-color 0.2s, box-shadow 0.2s; }
+        .form-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 2px var(--accent-primary); }
+        .remove-btn { color: var(--text-secondary); padding: 0.5rem; border-radius: 9999px; transition: background-color 0.2s, color 0.2s; }
+        .remove-btn:hover { background-color: #ef4444; color: white; }
+        .add-class-day-btn { width: 100%; background-color: rgba(var(--accent-rgb), 0.1); color: var(--accent-primary); font-weight: 600; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: background-color 0.2s; }
+        .add-class-day-btn:hover { background-color: rgba(var(--accent-rgb), 0.2); }
+    `;
+    document.head.appendChild(style);
+
+    editScheduleToggleBtn.addEventListener('click', toggleEditForm);
+    scheduleInputsContainer.addEventListener('input', handleScheduleEdit);
+    scheduleInputsContainer.addEventListener('click', handleScheduleEdit);
+    addClassBtn.style.display = 'none'; // Hide the old global add button
+
+    // Settings Modal Listeners
+    settingsBtn.addEventListener('click', openSettingsModal);
+    settingsModalCloseBtn.addEventListener('click', closeSettingsModal);
+    themeToggleSwitch.addEventListener('change', toggleTheme);
+    notificationsToggleSwitch.addEventListener('change', handleNotificationToggle);
+    exportDataBtn.addEventListener('click', exportData);
+    importDataBtn.addEventListener('click', importData);
+
+    // Task Management Event Listeners
+    scheduleGrid.addEventListener('click', (e) => {
+        const classItem = e.target.closest('.class-item-container');
+        if (classItem && currentView === 'week') { // Only allow clicks in week view
+            const { day, index } = classItem.dataset;
+            openTaskModal(day, parseInt(index, 10));
+        }
+    });
+    taskModal.addEventListener('click', (e) => {
+        if (e.target === taskModal) { // Click on overlay to close
+            closeTaskModal();
+        }
+    });
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            closeSettingsModal();
+        }
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") {
+            if (taskModal.classList.contains('is-open')) closeTaskModal();
+            if (settingsModal.classList.contains('is-open')) closeSettingsModal();
+        }
+    });
+
+    // Suggestions logic
+    questionInput.addEventListener('focus', updateSuggestions);
+    questionInput.addEventListener('input', updateSuggestions);
+    document.addEventListener('click', (e) => {
+        const target = e.target;
+        if (!target.closest('#qa-form') && !target.closest('#chat-suggestions-container')) {
+            if (chatSuggestionsContainer) chatSuggestionsContainer.innerHTML = '';
+        }
+    });
+
+    // Listen for resize to update scroll hint
+    window.addEventListener('resize', updateScrollHint);
+    
+    loadSchedule();
+    loadSubjectColors();
+    renderSchedule();
+
+    // Proactive welcome message
+    const todayName = DAYS_OF_WEEK[new Date().getDay()];
+    const todaySchedule = (schedule[todayName] || []).filter(c => c.start).sort((a,b) => a.start.localeCompare(b.start));
+    let welcomeMessage = "Hello! I'm ClassBuddy. Ask me anything about your schedule or homework.";
+    if (todaySchedule.length > 0) {
+        welcomeMessage = `Hello! I'm ClassBuddy. Today you have ${todaySchedule.length} class(es), starting with <strong>${todaySchedule[0].subject}</strong> at ${todaySchedule[0].start}. What can I help you with?`;
+    } else if (todayName !== 'Saturday' && todayName !== 'Sunday') {
+        welcomeMessage = `Hello! I'm ClassBuddy. It looks like you have no classes scheduled for today. Enjoy your day off! 🎉`;
+    }
+    addChatBubble(welcomeMessage, 'bot');
+    
+    // Dynamic year in footer
+    const yearEl = document.getElementById('current-year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear().toString();
+};
+
+init();
