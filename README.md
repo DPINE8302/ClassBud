@@ -40,5 +40,7 @@ This app is ready for static deployment. You can deploy it to services like:
 
 Just upload all the files (`index.html`, `sw.js`, `manifest.json`, `icon.svg`) to the root of your hosting provider.
 
+https://timeless-sparks-643169459645.us-west1.run.app/
+
 ---
 Made with ❤️ by [Win](https://github.com/wiqnnc)
