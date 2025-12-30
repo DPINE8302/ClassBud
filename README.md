@@ -5,7 +5,7 @@ ClassBuddy is a smart, simple, and offline-first web application designed to hel
 <!-- A screenshot of the application will be placed here -->
 <!-- ![ClassBuddy Screenshot](screenshot.png) -->
 
-## ✨ Key Features (v1.5.2)
+## ✨ Key Features (v1.5.3)
 
 - **Full Schedule Management**: Easily view your weekly schedule or a timeline for the current day.
 - **Edit On-the-Go**: A simple form allows you to add, remove, or modify classes. Your data is saved automatically.
@@ -13,9 +13,10 @@ ClassBuddy is a smart, simple, and offline-first web application designed to hel
 - **Smart Bilingual Chatbot**: Ask "Buddy" questions about your schedule in English or Thai (e.g., "What's my next class?" or "พรุ่งนี้มีเรียนอะไรบ้าง?").
 - **Integrated Task Management**: Attach to-do lists to each class. See pending tasks at a glance with badges.
 - **Settings Panel**: A centralized modal to control app settings.
+  - **Customizable Subject Colors**: Personalize your schedule by assigning unique colors to each subject for better visual organization.
   - **Theme Toggle**: Manually switch between Light and Dark modes.
   - **Proactive Notifications**: Enable/disable system notifications that remind you 10 minutes before your next class starts.
-  - **Data Import/Export**: Backup your schedule to a file and import it on another device or browser.
+  - **Data Import/Export**: Backup your schedule and settings (including colors) to a file and import it on another device or browser.
 - **Responsive & Modern Design**: A clean UI built with Tailwind CSS that looks great on both desktop and mobile devices.
 - **PWA Ready**: Can be installed on your home screen for an app-like experience.
 
