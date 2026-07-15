@@ -163,6 +163,7 @@ export function createInitialState(
     settings: {
       theme: settings.theme ?? "system",
       notificationsEnabled: settings.notificationsEnabled ?? false,
+      assistantName: settings.assistantName ?? "Buddy",
       lastRoute: { ...settings.lastRoute },
     },
   };

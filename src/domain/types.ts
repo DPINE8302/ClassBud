@@ -60,6 +60,7 @@ export interface SubjectNote {
 export interface ClassBudSettings {
   theme: ThemePreference;
   notificationsEnabled: boolean;
+  assistantName?: string;
   lastRoute: {
     compact?: string;
     wide?: string;

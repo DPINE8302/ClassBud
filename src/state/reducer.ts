@@ -35,6 +35,7 @@ export type ClassBudAction =
   | { type: "set-subject-note"; subjectId: string; body: string; updatedAt: string }
   | { type: "set-theme"; theme: ThemePreference }
   | { type: "set-notifications"; enabled: boolean }
+  | { type: "set-assistant-name"; name: string }
   | { type: "set-last-route"; layout: "compact" | "wide"; route: string }
   | { type: "add-subject"; subject: Subject }
   | { type: "update-subject"; id: string; changes: SubjectChanges }
@@ -171,6 +172,10 @@ export function classBudReducer(
     case "set-notifications":
       return commit(state, {
         settings: { ...state.settings, notificationsEnabled: action.enabled },
+      });
+    case "set-assistant-name":
+      return commit(state, {
+        settings: { ...state.settings, assistantName: action.name.slice(0, 40) },
       });
     case "set-last-route":
       return commit(state, {

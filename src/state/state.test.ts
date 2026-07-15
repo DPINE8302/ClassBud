@@ -161,6 +161,12 @@ describe("ClassBud reducer", () => {
     expect(withoutSession.revision).toBe(2);
   });
 
+  it("persists a customized Buddy name", () => {
+    const renamed = classBudReducer(createInitialState(), { type: "set-assistant-name", name: "Nova" });
+    expect(renamed.settings.assistantName).toBe("Nova");
+    expect(renamed.revision).toBe(1);
+  });
+
   it("protects seed subjects from deletion", () => {
     expect(() => classBudReducer(createInitialState(), { type: "delete-subject", id: "art-9" })).toThrow(
       "Seed subjects cannot be deleted",

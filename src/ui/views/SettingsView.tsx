@@ -1,6 +1,7 @@
 import { useId, useRef, type ChangeEvent } from "react";
 import {
   Bell,
+  Bot,
   Check,
   ChevronRight,
   Download,
@@ -20,6 +21,7 @@ interface SettingsViewProps {
   state: ClassBudStateV2;
   onThemeChange: (theme: ThemePreference) => void;
   onNotificationsChange: (enabled: boolean) => Promise<void> | void;
+  onAssistantNameChange: (name: string) => void;
   onExport: () => void;
   onImport: (file: File) => void;
   recoveryBackups: Array<{ key: string; kind: "legacy" | "import"; createdAt?: string }>;
@@ -33,7 +35,7 @@ const THEMES: Array<{ id: ThemePreference; label: string; icon: typeof Laptop }>
   { id: "dark", label: "Dark", icon: Moon },
 ];
 
-export function SettingsView({ state, onThemeChange, onNotificationsChange, onExport, onImport, recoveryBackups, onDownloadRecoveryBackup, onRestoreOfficial }: SettingsViewProps) {
+export function SettingsView({ state, onThemeChange, onNotificationsChange, onAssistantNameChange, onExport, onImport, recoveryBackups, onDownloadRecoveryBackup, onRestoreOfficial }: SettingsViewProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const fileInputId = useId();
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
@@ -63,6 +65,14 @@ export function SettingsView({ state, onThemeChange, onNotificationsChange, onEx
           <div className="settings-row">
             <div><strong>Reminders</strong><small>Only while ClassBud or the installed app is open.</small></div>
             <button className="switch" type="button" role="switch" aria-label="Class reminders" aria-checked={state.settings.notificationsEnabled} onClick={() => void onNotificationsChange(!state.settings.notificationsEnabled)}><span /></button>
+          </div>
+        </section>
+
+        <section className="settings-group">
+          <header><span className="settings-icon" data-tone="purple"><Bot aria-hidden="true" /></span><div><h2>Buddy</h2><p>Personalize your private schedule assistant.</p></div></header>
+          <div className="settings-field">
+            <label htmlFor="assistant-name"><strong>Assistant name</strong><small>Used in Buddy’s welcome screen and chat.</small></label>
+            <input id="assistant-name" type="text" maxLength={40} value={state.settings.assistantName ?? "Buddy"} placeholder="Buddy" onChange={(event) => onAssistantNameChange(event.target.value)} />
           </div>
         </section>
 

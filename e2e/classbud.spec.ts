@@ -67,6 +67,16 @@ test("search and Buddy use local timetable data", async ({ page }) => {
   await page.getByRole("button", { name: "Send message" }).click();
   await expect(page.getByText(/Room 1712/)).toBeVisible();
   await expect(page.getByText(/Room 555/)).toBeVisible();
+  await page.getByRole("button", { name: "New chat" }).click();
+  await expect(page.getByRole("heading", { name: "Chat with Buddy" })).toBeVisible();
+});
+
+test("customizes the offline assistant from Settings", async ({ page }) => {
+  await page.goto("/settings");
+  await page.getByLabel("Assistant name").fill("Nova");
+  await page.goto("/buddy");
+  await expect(page.getByRole("heading", { name: "Nova", exact: true })).toBeVisible();
+  await expect(page.getByPlaceholder("Message Nova…")).toBeVisible();
 });
 
 test("shows the frozen current class and next class", async ({ page }, testInfo) => {

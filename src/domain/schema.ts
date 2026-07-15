@@ -131,6 +131,7 @@ const SettingsSchema = z
   .object({
     theme: z.enum(["system", "light", "dark"]),
     notificationsEnabled: z.boolean(),
+    assistantName: z.string().max(40).optional(),
     lastRoute: z
       .object({
         compact: AppRouteSchema.optional(),
