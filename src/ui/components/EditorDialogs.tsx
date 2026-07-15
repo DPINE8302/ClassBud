@@ -169,7 +169,13 @@ function SubjectEditor({ open, subject, onClose, onSave }: { open: boolean; subj
         <div className="form-grid"><label><span>Thai name</span><input lang="th" required maxLength={200} value={nameTh} onChange={(event) => setNameTh(event.target.value)} /></label><label><span>English name</span><input required maxLength={200} value={nameEn} onChange={(event) => setNameEn(event.target.value)} /></label></div>
         <label><span>Subject code</span><input required maxLength={40} value={code} onChange={(event) => setCode(event.target.value)} /></label>
         <label><span>Teachers <small>Separate with commas</small></span><input required maxLength={500} value={teachers} placeholder="อ.ชื่อ, อ.Teacher" onChange={(event) => setTeachers(event.target.value)} /></label>
-        <fieldset className="accent-picker"><legend>Colour</legend>{(["blue", "cyan", "amber", "rose", "slate"] as const).map((color) => <label key={color}><input type="radio" name="accent" value={color} checked={accent === color} onChange={() => setAccent(color)} /><span data-accent={color} /><small>{color}</small></label>)}</fieldset>
+        <fieldset className="accent-picker"><legend>Colour</legend>{([
+          ["blue", "Tech"],
+          ["cyan", "Lab"],
+          ["amber", "Social"],
+          ["rose", "Language"],
+          ["slate", "Math"],
+        ] as const).map(([color, label]) => <label key={color}><input type="radio" name="accent" value={color} checked={accent === color} onChange={() => setAccent(color)} /><span data-accent={color} /><small>{label}</small></label>)}</fieldset>
       </form>
     </Modal>
   );

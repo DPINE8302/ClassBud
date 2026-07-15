@@ -34,7 +34,7 @@ function SessionMiniRow({
   const clock = sessionClock(session);
   return (
     <button className="session-mini-row" type="button" onClick={onSelect}>
-      <span className="event-swatch" data-accent={session.mode === "classroom" ? subject.accent : session.mode} />
+      <span className="event-swatch" data-accent={subject.accent} />
       <span className="session-mini-row__content">
         <strong lang="th">{subject.nameTh}</strong>
         <small>{clock.start}–{clock.end}</small>
@@ -68,7 +68,7 @@ export function TodayView({ state, now: fixedNow, onSelectSession, onToggleTask 
       <section className="today-layout" aria-label="Today overview">
         <div className="today-primary">
           {currentBand ? (
-            <div className="now-card now-card--routine" data-accent="slate" role="status">
+            <div className="now-card now-card--routine" data-accent="blue" role="status">
               <span className="now-card__ambient" aria-hidden="true" />
               <span className="now-card__eyebrow"><Clock3 aria-hidden="true" /> Now</span>
               <span className="now-card__title">{currentBand.label}</span>
@@ -81,7 +81,7 @@ export function TodayView({ state, now: fixedNow, onSelectSession, onToggleTask 
           ) : featured && featuredSubject && clock ? (
             <button
               className="now-card"
-              data-accent={featured.mode === "classroom" ? featuredSubject.accent : featured.mode}
+              data-accent={featuredSubject.accent}
               type="button"
               onClick={() => {
                 onSelectSession(featured.id);

@@ -102,7 +102,8 @@ function EventBlock({
     <button
       type="button"
       className={`schedule-event${selected ? " is-selected" : ""}${compact ? " schedule-event--compact" : ""}`}
-      data-accent={session.mode === "classroom" ? subject.accent : session.mode}
+      data-accent={subject.accent}
+      data-mode={session.mode}
       style={compact ? undefined : eventStyle(session)}
       aria-label={`${subject.nameTh}, ${clock.start} to ${clock.end}`}
       onClick={onClick}
@@ -287,7 +288,7 @@ function MonthGrid({ state, selectedDateKey, onChooseDate }: { state: ClassBudSt
               <div className="month-dots" aria-hidden="true">
                 {sessions.slice(0, 4).map((session) => {
                   const subject = subjectFor(state, session.subjectId);
-                  return <i key={session.id} data-accent={session.mode === "classroom" ? subject?.accent : session.mode} />;
+                  return <i key={session.id} data-accent={subject?.accent ?? "blue"} />;
                 })}
               </div>
               {sessions.length ? <small>{sessions.length} class{sessions.length === 1 ? "" : "es"}</small> : null}
@@ -327,7 +328,7 @@ function SessionInspector({
   const note = state.subjectNotes[subject.id]?.body ?? "";
   return (
     <aside className="session-inspector" aria-label={`${subject.nameTh} details`}>
-      <header className="inspector-header" data-accent={session.mode === "classroom" ? subject.accent : session.mode}>
+      <header className="inspector-header" data-accent={subject.accent}>
         <span className="inspector-header__icon" aria-hidden="true"><BookOpen /></span>
         <div>
           <h2 lang="th">{subject.nameTh}</h2>
