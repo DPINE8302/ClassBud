@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ClassBud">
+  <defs>
+    <linearGradient id="maskable-bg" x1="32" y1="16" x2="480" y2="496" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#0754D8"/>
+    </linearGradient>
+  </defs>
+  <!-- Maskable artwork must paint every edge; launchers provide the final shape. -->
+  <rect width="512" height="512" fill="url(#maskable-bg)"/>
+  <!-- The calendar mark remains inside the standard 80% maskable safe zone. -->
+  <rect x="112" y="126" width="288" height="274" rx="55" fill="#fff"/>
+  <path d="M112 206h288" stroke="#DCE9FF" stroke-width="28"/>
+  <path d="M177 102v72M335 102v72" stroke="#fff" stroke-width="30" stroke-linecap="round"/>
+  <path d="m181 300 51 51 104-113" fill="none" stroke="#0A63E8" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

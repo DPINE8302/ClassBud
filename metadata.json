@@ -1,6 +1,5 @@
 {
-  "name": "ClassBud ",
-  "description": "v1.5.2",
-  "requestFramePermissions": [],
-  "prompt": ""
+  "name": "ClassBud",
+  "version": "2.0.0",
+  "description": "Offline-first M.5 timetable, tasks, notes, and Buddy assistant."
 }
