@@ -1,6 +1,6 @@
 import { BookOpen, Clock3, Edit3, Plus, Trash2, UserRound } from "lucide-react";
 import type { ClassBudStateV2 } from "../../domain";
-import { modeLabel, sessionClock, subjectFor, WEEKDAYS } from "../utils";
+import { modeLabel, sessionClock, WEEKDAYS } from "../utils";
 
 interface SubjectsViewProps {
   state: ClassBudStateV2;
@@ -18,11 +18,10 @@ export function SubjectsView({ state, onAddSubject, onEditSubject, onDeleteSubje
       </header>
       <div className="subjects-grid">
         {state.subjects.map((subject) => {
-          const displaySubject = subjectFor(state, subject.id) ?? subject;
           const sessions = state.sessions.filter((session) => session.subjectId === subject.id);
           const periods = sessions.reduce((sum, session) => sum + session.periodIds.length, 0);
           return (
-            <article className="subject-card" key={subject.id} data-accent={displaySubject.accent}>
+            <article className="subject-card" key={subject.id} data-accent={subject.accent}>
               <header>
                 <span className="subject-card__icon" aria-hidden="true"><BookOpen /></span>
                 <span className="subject-card__code">{subject.code}</span>

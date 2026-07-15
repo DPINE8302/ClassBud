@@ -95,18 +95,18 @@ export const CANONICAL_SUBJECTS: readonly Subject[] = [
   { id: "art-9", code: "ศ32101", nameTh: "ศิลปะ 9", nameEn: "Art 9", teachers: ["อ.ชญานิศ"], accent: "rose", source: "seed" },
   { id: "physical-science-2", code: "ว32103", nameTh: "วิทยาศาสตร์กายภาพ 2", nameEn: "Physical Science 2", teachers: ["อ.โยธิชา"], accent: "cyan", source: "seed" },
   { id: "3d-model-sculpting", code: "ว32297", nameTh: "การปั้นโมเดล 3 มิติ", nameEn: "3D Model Sculpting", teachers: ["อ.คัทลียา"], accent: "blue", source: "seed" },
-  { id: "guidance", code: "กน9", nameTh: "แนะแนว", nameEn: "Guidance", teachers: ["อ.กัญญาพัชร"], accent: "amber", source: "seed" },
+  { id: "guidance", code: "กน9", nameTh: "แนะแนว", nameEn: "Guidance", teachers: ["อ.กัญญาพัชร"], accent: "slate", source: "seed" },
   { id: "game-design-development", code: "ว32274", nameTh: "การออกแบบและพัฒนาเกม", nameEn: "Game Design & Development", teachers: ["ผศ.สุคนธ์", "อ.คัทลียา"], accent: "blue", source: "seed" },
-  { id: "mathematics-9", code: "ค32101", nameTh: "คณิตศาสตร์ 9", nameEn: "Mathematics 9", teachers: ["อ.มลิธชา"], accent: "slate", source: "seed" },
-  { id: "english-listening-speaking-3", code: "อ32221", nameTh: "อังกฤษฟัง-พูดเพื่อสื่อสาร 3", nameEn: "English Listening & Speaking 3", teachers: ["อ.Diana", "อ.พาขวัญ"], accent: "rose", source: "seed" },
-  { id: "career-industry", code: "ง32101", nameTh: "การงานอาชีพด้านอุตสาหกรรม", nameEn: "Career Education: Industry", teachers: ["อ.วัชชมา"], accent: "amber", source: "seed" },
+  { id: "mathematics-9", code: "ค32101", nameTh: "คณิตศาสตร์ 9", nameEn: "Mathematics 9", teachers: ["อ.มลิธชา"], accent: "amber", source: "seed" },
+  { id: "english-listening-speaking-3", code: "อ32221", nameTh: "อังกฤษฟัง-พูดเพื่อสื่อสาร 3", nameEn: "English Listening & Speaking 3", teachers: ["อ.Diana", "อ.พาขวัญ"], accent: "cyan", source: "seed" },
+  { id: "career-industry", code: "ง32101", nameTh: "การงานอาชีพด้านอุตสาหกรรม", nameEn: "Career Education: Industry", teachers: ["อ.วัชชมา"], accent: "slate", source: "seed" },
   { id: "thai-9", code: "ท32101", nameTh: "ภาษาไทย 9", nameEn: "Thai 9", teachers: ["อ.ดร.สุวิมล"], accent: "rose", source: "seed" },
-  { id: "computer-programming-1", code: "ว30254", nameTh: "การเขียนโปรแกรมคอมพิวเตอร์ 1", nameEn: "Computer Programming 1", teachers: ["อ.ธนภูมิ"], accent: "blue", source: "seed" },
-  { id: "additional-mathematics-3", code: "ค32214", nameTh: "คณิตศาสตร์เพิ่มเติม 3", nameEn: "Additional Mathematics 3", teachers: ["อ.มลิธชา"], accent: "slate", source: "seed" },
-  { id: "english-9", code: "อ32101", nameTh: "ภาษาอังกฤษ 9", nameEn: "English 9", teachers: ["อ.ดลพร"], accent: "rose", source: "seed" },
-  { id: "social-studies-9", code: "ส32101", nameTh: "สังคมศึกษา ศาสนาและวัฒนธรรม 9", nameEn: "Social Studies, Religion and Culture 9", teachers: ["อ.กิ่งกาญจน์"], accent: "amber", source: "seed" },
-  { id: "physical-education-9", code: "พ32103", nameTh: "พลศึกษา 9", nameEn: "Physical Education 9", teachers: ["อ.คัทลียา"], accent: "cyan", source: "seed" },
-  { id: "health-education-9", code: "พ32101", nameTh: "สุขศึกษา 9", nameEn: "Health Education 9", teachers: ["อ.คัทลียา"], accent: "cyan", source: "seed" },
+  { id: "computer-programming-1", code: "ว30254", nameTh: "การเขียนโปรแกรมคอมพิวเตอร์ 1", nameEn: "Computer Programming 1", teachers: ["อ.ธนภูมิ"], accent: "cyan", source: "seed" },
+  { id: "additional-mathematics-3", code: "ค32214", nameTh: "คณิตศาสตร์เพิ่มเติม 3", nameEn: "Additional Mathematics 3", teachers: ["อ.มลิธชา"], accent: "amber", source: "seed" },
+  { id: "english-9", code: "อ32101", nameTh: "ภาษาอังกฤษ 9", nameEn: "English 9", teachers: ["อ.ดลพร"], accent: "blue", source: "seed" },
+  { id: "social-studies-9", code: "ส32101", nameTh: "สังคมศึกษา ศาสนาและวัฒนธรรม 9", nameEn: "Social Studies, Religion and Culture 9", teachers: ["อ.กิ่งกาญจน์"], accent: "rose", source: "seed" },
+  { id: "physical-education-9", code: "พ32103", nameTh: "พลศึกษา 9", nameEn: "Physical Education 9", teachers: ["อ.คัทลียา"], accent: "slate", source: "seed" },
+  { id: "health-education-9", code: "พ32101", nameTh: "สุขศึกษา 9", nameEn: "Health Education 9", teachers: ["อ.คัทลียา"], accent: "slate", source: "seed" },
 ] as const;
 
 function session(
@@ -166,35 +166,6 @@ export function createInitialState(
       lastRoute: { ...settings.lastRoute },
     },
   };
-}
-
-const LEGACY_OFFICIAL_ACCENTS: Readonly<Record<string, Subject["accent"]>> = {
-  guidance: "slate",
-  "mathematics-9": "amber",
-  "english-listening-speaking-3": "cyan",
-  "career-industry": "slate",
-  "computer-programming-1": "cyan",
-  "additional-mathematics-3": "amber",
-  "english-9": "blue",
-  "social-studies-9": "rose",
-  "physical-education-9": "slate",
-  "health-education-9": "slate",
-};
-
-export function upgradeOfficialPalette(state: ClassBudStateV2): ClassBudStateV2 {
-  if (state.revision >= Number.MAX_SAFE_INTEGER) return state;
-  const official = new Map(CANONICAL_SUBJECTS.map(({ id, accent }) => [id, accent]));
-  let changed = false;
-  const subjects = state.subjects.map((subject) => {
-    const legacyAccent = LEGACY_OFFICIAL_ACCENTS[subject.id];
-    const officialAccent = official.get(subject.id);
-    if (subject.source !== "seed" || !legacyAccent || subject.accent !== legacyAccent || !officialAccent) {
-      return subject;
-    }
-    changed = true;
-    return { ...subject, accent: officialAccent };
-  });
-  return changed ? { ...state, subjects, revision: state.revision + 1 } : state;
 }
 
 export function restoreOfficialTimetable(state: ClassBudStateV2): ClassBudStateV2 {

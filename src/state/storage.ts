@@ -2,7 +2,6 @@ import {
   createExportEnvelope,
   createInitialState,
   parseClassBudState,
-  upgradeOfficialPalette,
   validateClassBudState,
   validateImportText,
 } from "../domain";
@@ -149,19 +148,7 @@ export function loadOrMigrateState(
   if (v2Raw !== null) {
     const parsed = parseStoredState(v2Raw);
     if (parsed.success) {
-      const upgraded = upgradeOfficialPalette(parsed.data);
-      if (upgraded === parsed.data) return { state: parsed.data, source: "v2", canPersist: true };
-      try {
-        writeVerified(storage, STATE_STORAGE_KEY, JSON.stringify(upgraded));
-        return { state: upgraded, source: "v2", canPersist: true };
-      } catch (error) {
-        return {
-          state: upgraded,
-          source: "v2",
-          canPersist: false,
-          warning: `The new palette is active, but its preference update could not be saved: ${error instanceof Error ? error.message : "unknown error"}`,
-        };
-      }
+      return { state: parsed.data, source: "v2", canPersist: true };
     }
     return {
       state: createInitialState(),

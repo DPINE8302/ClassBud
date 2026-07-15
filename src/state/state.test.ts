@@ -59,18 +59,6 @@ describe("state migration and persistence", () => {
     expect(result.backupKey?.startsWith(LEGACY_BACKUP_PREFIX)).toBe(true);
   });
 
-  it("upgrades official v2 subject colours to the ClassBud palette", () => {
-    const storage = new MemoryStorage();
-    const state = createInitialState();
-    state.subjects.find(({ id }) => id === "mathematics-9")!.accent = "amber";
-    state.subjects.find(({ id }) => id === "english-9")!.accent = "blue";
-    storage.setItem(STATE_STORAGE_KEY, JSON.stringify(state));
-    const result = loadOrMigrateState(storage);
-    expect(result.state.revision).toBe(1);
-    expect(result.state.subjects.find(({ id }) => id === "mathematics-9")?.accent).toBe("slate");
-    expect(result.state.subjects.find(({ id }) => id === "english-9")?.accent).toBe("rose");
-  });
-
   it("does not overwrite corrupt v2 or legacy data when storage fails", () => {
     const corrupt = new MemoryStorage();
     corrupt.setItem(STATE_STORAGE_KEY, "{bad");
