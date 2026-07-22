@@ -122,7 +122,7 @@ test("recovers unknown deep links without remembering a redirect loop", async ({
 
 test("meets automated accessibility gate", async ({ page }) => {
   await page.goto("/schedule");
-  for (const route of ["/schedule", "/settings"] as const) {
+  for (const route of ["/today", "/schedule", "/subjects", "/buddy", "/settings"] as const) {
     await page.goto(route);
     const results = await new AxeBuilder({ page }).analyze();
     const serious = results.violations.filter((violation) =>

@@ -19,7 +19,7 @@
   --ui-accent: #0078ff;
   --ui-accent-hover: #2f9fff;
   --ui-accent-solid: #0066cc;
-  --ui-accent-text-light: #0066d9;
+  --ui-accent-text-light: #0066cc;
   --ui-accent-text-dark: #2f9fff;
   --accent: var(--ui-accent);
   --accent-hover: var(--ui-accent-hover);
@@ -113,7 +113,7 @@
   --ui-accent: #0078ff;
   --ui-accent-hover: #2f9fff;
   --ui-accent-solid: #0066cc;
-  --ui-accent-text-light: #0066d9;
+  --ui-accent-text-light: #0066cc;
   --ui-accent-text-dark: #2f9fff;
 }
 
@@ -358,7 +358,7 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 .now-card__eyebrow { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 28px; padding: 5px 9px; border-radius: 8px; color: color-mix(in srgb, var(--event-color) 76%, var(--label)); background: color-mix(in srgb, var(--event-color) 14%, var(--raised)); font-size: 11px; font-weight: 600; }
 .now-card__eyebrow svg { width: 13px; height: 13px; }
 .now-card__title { max-width: 76%; font-size: 28px; font-weight: 700; line-height: 1.36; }
-.now-card__english { margin-top: 3px; color: var(--secondary); font-size: 15px; }
+.now-card__english { margin-top: 3px; color: var(--secondary-strong); font-size: 15px; }
 .now-card__details { display: flex; gap: 18px; margin-top: 22px; font-size: 13px; }
 .now-card__details span { display: inline-flex; align-items: center; gap: 6px; }
 .now-card__details svg { width: 15px; height: 15px; }
@@ -426,7 +426,7 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 .schedule-event.is-selected { z-index: 5; box-shadow: 0 0 0 2px var(--shell), 0 0 0 4px var(--accent-text), 0 12px 28px rgba(0,0,0,.28); }
 .schedule-event__main, .schedule-event__meta { display: grid; min-width: 0; }
 .schedule-event__main strong { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
-.schedule-event__main small, .schedule-event__meta { color: var(--secondary); font-size: 10px; }
+.schedule-event__main small, .schedule-event__meta { color: var(--secondary-strong); font-size: 10px; }
 .schedule-event__english { display: none; }
 .schedule-event__meta { justify-items: end; text-align: right; }
 .now-line { position: absolute; z-index: 7; top: var(--now-y); right: 0; left: 0; height: 1px; background: #ff453a; pointer-events: none; }
@@ -540,7 +540,7 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 .subject-card__actions { display: flex; margin-left: auto; opacity: .62; transition: opacity 160ms ease; }
 .subject-card:hover .subject-card__actions, .subject-card:focus-within .subject-card__actions { opacity: 1; }
 .subject-card h2 { font-size: 18px; font-weight: 600; line-height: 1.45; }
-.subject-card > p { min-height: 36px; color: var(--secondary); font-size: 12px; }
+.subject-card > p { min-height: 36px; color: var(--secondary-strong); font-size: 12px; }
 .subject-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 16px 0 12px; padding: 12px 0; border-block: 1px solid var(--separator-soft); }
 .subject-card dt { display: flex; align-items: center; gap: 5px; color: var(--tertiary); font-size: 10px; }
 .subject-card dt svg { width: 11px; height: 11px; }
@@ -811,7 +811,7 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
   .week-column__events { gap: 0; margin: 10px; padding: 0; border-radius: 12px; }
   .week-column__events > p { padding: 14px 0; font-size: 13px; }
   .week-event-wrap { grid-template-columns: 44px minmax(0, 1fr); align-items: start; gap: 10px; padding: 9px; }
-  .week-event-wrap > span { padding: 12px 0 0 2px; color: var(--secondary); font-size: 11px; font-weight: 500; line-height: 16px; font-variant-numeric: tabular-nums; }
+  .week-event-wrap > span { padding: 12px 0 0 2px; color: var(--secondary-strong); font-size: 11px; font-weight: 500; line-height: 16px; font-variant-numeric: tabular-nums; }
   .week-grid .schedule-event--compact { min-height: 78px; align-items: start; padding: 12px 13px; border-radius: 10px; }
   .week-grid .schedule-event__main { align-content: start; gap: 2px; }
   .week-grid .schedule-event__main strong { font-size: 15px; line-height: 22px; }
