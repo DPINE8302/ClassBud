@@ -135,6 +135,43 @@ describe("state migration and persistence", () => {
     controller.dispose();
     vi.useRealTimers();
   });
+
+  it("normalizes legacy v2 state without a false same-revision conflict", () => {
+    const storage = new MemoryStorage();
+    const legacyV2 = createInitialState() as unknown as { settings: Record<string, unknown>; revision: number };
+    delete legacyV2.settings.appAccent;
+    storage.setItem(STATE_STORAGE_KEY, JSON.stringify(legacyV2));
+
+    const loaded = loadOrMigrateState(storage);
+    expect(loaded).toMatchObject({ source: "v2", canPersist: true });
+    expect(loaded.state.settings.appAccent).toBe("blue");
+
+    const onError = vi.fn();
+    const controller = createPersistenceController(storage, { onError });
+    controller.schedule(loaded.state);
+
+    expect(controller.flush()).toEqual({ success: true, revision: legacyV2.revision });
+    expect(onError).not.toHaveBeenCalled();
+    expect(JSON.parse(storage.getItem(STATE_STORAGE_KEY) ?? "{}")).toMatchObject({
+      revision: legacyV2.revision,
+      settings: { appAccent: "blue" },
+    });
+    controller.dispose();
+  });
+
+  it("still rejects genuinely different state at the same revision", () => {
+    const storage = new MemoryStorage();
+    const current = createInitialState({ theme: "light" });
+    const competing = createInitialState({ theme: "dark" });
+    storage.setItem(STATE_STORAGE_KEY, JSON.stringify(current));
+
+    const controller = createPersistenceController(storage);
+    controller.schedule(competing);
+
+    expect(controller.flush()).toMatchObject({ success: false, reason: "conflict" });
+    expect(JSON.parse(storage.getItem(STATE_STORAGE_KEY) ?? "{}").settings.theme).toBe("light");
+    controller.dispose();
+  });
 });
 
 describe("ClassBud reducer", () => {
@@ -165,6 +202,12 @@ describe("ClassBud reducer", () => {
     const renamed = classBudReducer(createInitialState(), { type: "set-assistant-name", name: "Nova" });
     expect(renamed.settings.assistantName).toBe("Nova");
     expect(renamed.revision).toBe(1);
+  });
+
+  it("persists a customized app accent", () => {
+    const accented = classBudReducer(createInitialState(), { type: "set-app-accent", accent: "purple" });
+    expect(accented.settings.appAccent).toBe("purple");
+    expect(accented.revision).toBe(1);
   });
 
   it("protects seed subjects from deletion", () => {

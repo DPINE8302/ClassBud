@@ -5,6 +5,7 @@ import {
   createExportEnvelope,
   createInitialState,
   MAX_IMPORT_BYTES,
+  type AppAccent,
   type ClassBudStateV2,
   type Session,
   type Subject,
@@ -111,6 +112,10 @@ export default function App() {
     else document.documentElement.dataset.theme = state.settings.theme;
     document.documentElement.style.colorScheme = state.settings.theme === "system" ? "light dark" : state.settings.theme;
   }, [state.settings.theme]);
+
+  useEffect(() => {
+    document.documentElement.dataset.uiAccent = state.settings.appAccent;
+  }, [state.settings.appAccent]);
 
   useEffect(() => {
     if (!isAppRoute(location.pathname)) return;
@@ -294,7 +299,7 @@ export default function App() {
         <Route path="/tasks" element={<TasksView state={state} onToggleTask={(id) => safeDispatch({ type: "update-task", id, changes: { completed: !state.tasks.find((task) => task.id === id)?.completed }, updatedAt: new Date().toISOString() })} onAddTask={() => setEditor({ kind: "task" })} onEditTask={(id) => setEditor({ kind: "task", id })} onDeleteTask={(id) => safeDispatch({ type: "delete-task", id }, { title: "Task deleted", detail: "The task was removed." })} />} />
         <Route path="/subjects" element={<SubjectsView state={state} onAddSubject={() => setEditor({ kind: "subject" })} onEditSubject={(id) => setEditor({ kind: "subject", id })} onDeleteSubject={(id) => setEditor({ kind: "delete-subject", id })} />} />
         <Route path="/buddy" element={<BuddyView state={state} />} />
-        <Route path="/settings" element={<SettingsView state={state} onThemeChange={(theme: ThemePreference) => safeDispatch({ type: "set-theme", theme })} onNotificationsChange={changeNotifications} onAssistantNameChange={(name) => safeDispatch({ type: "set-assistant-name", name })} onExport={exportData} onImport={importData} recoveryBackups={recoveryBackups.map(({ key, kind, createdAt }) => ({ key, kind, createdAt }))} onDownloadRecoveryBackup={(key) => {
+        <Route path="/settings" element={<SettingsView state={state} onThemeChange={(theme: ThemePreference) => safeDispatch({ type: "set-theme", theme })} onAppAccentChange={(accent: AppAccent) => safeDispatch({ type: "set-app-accent", accent })} onNotificationsChange={changeNotifications} onAssistantNameChange={(name) => safeDispatch({ type: "set-assistant-name", name })} onExport={exportData} onImport={importData} recoveryBackups={recoveryBackups.map(({ key, kind, createdAt }) => ({ key, kind, createdAt }))} onDownloadRecoveryBackup={(key) => {
           const backup = recoveryBackups.find((item) => item.key === key);
           if (backup) downloadText(`classbud-${backup.kind}-backup.json`, backup.text);
         }} onRestoreOfficial={() => setEditor({ kind: "restore" })} />} />

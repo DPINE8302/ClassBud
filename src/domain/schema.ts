@@ -130,6 +130,10 @@ const AppRouteSchema = z.enum(["/today", "/schedule", "/tasks", "/subjects", "/b
 const SettingsSchema = z
   .object({
     theme: z.enum(["system", "light", "dark"]),
+    // Default keeps existing ClassBud v2 state and 2.0 exports compatible.
+    appAccent: z
+      .enum(["blue", "green", "orange", "red", "purple", "indigo", "pink", "teal"])
+      .default("blue"),
     notificationsEnabled: z.boolean(),
     assistantName: z.string().max(40).optional(),
     lastRoute: z

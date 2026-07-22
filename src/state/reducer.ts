@@ -2,6 +2,7 @@ import { parseClassBudState } from "../domain/schema";
 import { restoreOfficialTimetable } from "../domain/schedule";
 import type {
   Accent,
+  AppAccent,
   ClassBudStateV2,
   Session,
   Subject,
@@ -34,6 +35,7 @@ export type ClassBudAction =
   | { type: "delete-task"; id: string }
   | { type: "set-subject-note"; subjectId: string; body: string; updatedAt: string }
   | { type: "set-theme"; theme: ThemePreference }
+  | { type: "set-app-accent"; accent: AppAccent }
   | { type: "set-notifications"; enabled: boolean }
   | { type: "set-assistant-name"; name: string }
   | { type: "set-last-route"; layout: "compact" | "wide"; route: string }
@@ -169,6 +171,8 @@ export function classBudReducer(
     }
     case "set-theme":
       return commit(state, { settings: { ...state.settings, theme: action.theme } });
+    case "set-app-accent":
+      return commit(state, { settings: { ...state.settings, appAccent: action.accent } });
     case "set-notifications":
       return commit(state, {
         settings: { ...state.settings, notificationsEnabled: action.enabled },

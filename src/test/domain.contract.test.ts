@@ -102,6 +102,14 @@ describe("v2 validation contract", () => {
     if (result.success) expect(result.data.state.scheduleVersion).toBe("m5-im-s1-2569");
   });
 
+  it("hydrates older v2 state with the default app accent", () => {
+    const legacyV2 = createInitialState() as unknown as { settings: Record<string, unknown> };
+    delete legacyV2.settings.appAccent;
+    const result = validateClassBudState(legacyV2);
+    expect(result.success).toBe(true);
+    if (result.success) expect(result.data.settings.appAccent).toBe("blue");
+  });
+
   it("rejects collisions and unknown references", () => {
     const state = createInitialState();
     state.sessions.push({

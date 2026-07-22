@@ -7,9 +7,9 @@ ClassBud is an offline-first timetable and study companion for the M.5 Innovativ
 - Exact Tuesday–Friday timetable with Day, Week, and Month views
 - Current-class timeline, upcoming classes, rooms, teachers, and learning mode
 - Tasks and per-subject notes saved locally
-- Bilingual Thai/English offline Buddy assistant
+- Bilingual Thai/English offline Buddy assistant with weekly, daypart, room, teacher, and task queries
 - Safe v1 migration with downloadable legacy backup
-- System, light, and dark themes
+- System, light, and dark themes with eight persistent app accents
 - Installable PWA with offline app shell
 - Responsive desktop inspector, tablet split view, and phone navigation
 

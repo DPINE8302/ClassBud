@@ -10,16 +10,18 @@ import {
   Info,
   Laptop,
   Moon,
+  Palette,
   RefreshCcw,
   ShieldCheck,
   Sun,
   Upload,
 } from "lucide-react";
-import type { ClassBudStateV2, ThemePreference } from "../../domain";
+import type { AppAccent, ClassBudStateV2, ThemePreference } from "../../domain";
 
 interface SettingsViewProps {
   state: ClassBudStateV2;
   onThemeChange: (theme: ThemePreference) => void;
+  onAppAccentChange: (accent: AppAccent) => void;
   onNotificationsChange: (enabled: boolean) => Promise<void> | void;
   onAssistantNameChange: (name: string) => void;
   onExport: () => void;
@@ -35,9 +37,21 @@ const THEMES: Array<{ id: ThemePreference; label: string; icon: typeof Laptop }>
   { id: "dark", label: "Dark", icon: Moon },
 ];
 
-export function SettingsView({ state, onThemeChange, onNotificationsChange, onAssistantNameChange, onExport, onImport, recoveryBackups, onDownloadRecoveryBackup, onRestoreOfficial }: SettingsViewProps) {
+const APP_ACCENTS: Array<{ id: AppAccent; label: string }> = [
+  { id: "blue", label: "Blue" },
+  { id: "green", label: "Green" },
+  { id: "orange", label: "Orange" },
+  { id: "red", label: "Red" },
+  { id: "purple", label: "Purple" },
+  { id: "indigo", label: "Indigo" },
+  { id: "pink", label: "Pink" },
+  { id: "teal", label: "Teal" },
+];
+
+export function SettingsView({ state, onThemeChange, onAppAccentChange, onNotificationsChange, onAssistantNameChange, onExport, onImport, recoveryBackups, onDownloadRecoveryBackup, onRestoreOfficial }: SettingsViewProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const fileInputId = useId();
+  const accentGroupName = useId();
   function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (file) onImport(file);
@@ -57,6 +71,28 @@ export function SettingsView({ state, onThemeChange, onNotificationsChange, onAs
                 <span className="radio-mark">{state.settings.theme === id ? <Check aria-hidden="true" /> : null}</span>
               </button>
             ))}
+          </div>
+          <div className="settings-subsection settings-subsection--accent">
+            <div className="settings-subsection__heading">
+              <span><Palette aria-hidden="true" /></span>
+              <div><strong>Accent color</strong><small>Personalize buttons, links, and selected controls.</small></div>
+            </div>
+            <fieldset className="app-accent-picker">
+              <legend className="sr-only">Accent color</legend>
+              {APP_ACCENTS.map(({ id, label }) => (
+                <label key={id} data-app-accent={id}>
+                  <input
+                    type="radio"
+                    name={accentGroupName}
+                    aria-label={`${label} accent`}
+                    checked={state.settings.appAccent === id}
+                    onChange={() => onAppAccentChange(id)}
+                  />
+                  <span className="app-accent-swatch" aria-hidden="true"><Check /></span>
+                  <strong>{label}</strong>
+                </label>
+              ))}
+            </fieldset>
           </div>
         </section>
 

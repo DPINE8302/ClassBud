@@ -67,7 +67,8 @@ export function createPersistenceController(
         if (current.data.revision > state.revision) {
           return emitFailure("conflict", "A newer ClassBud revision exists in another tab");
         }
-        if (current.data.revision === state.revision && currentRaw !== text) {
+        const currentText = JSON.stringify(current.data);
+        if (current.data.revision === state.revision && currentText !== text) {
           return emitFailure("conflict", "Another tab saved a different ClassBud change at this revision");
         }
       }

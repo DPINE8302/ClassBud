@@ -162,6 +162,7 @@ export function createInitialState(
     subjectNotes: {},
     settings: {
       theme: settings.theme ?? "system",
+      appAccent: settings.appAccent ?? "blue",
       notificationsEnabled: settings.notificationsEnabled ?? false,
       assistantName: settings.assistantName ?? "Buddy",
       lastRoute: { ...settings.lastRoute },

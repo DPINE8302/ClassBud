@@ -20,6 +20,16 @@ export type Source = "seed" | "custom";
 
 export type ThemePreference = "system" | "light" | "dark";
 
+export type AppAccent =
+  | "blue"
+  | "green"
+  | "orange"
+  | "red"
+  | "purple"
+  | "indigo"
+  | "pink"
+  | "teal";
+
 export interface Subject {
   id: string;
   code: string;
@@ -59,6 +69,7 @@ export interface SubjectNote {
 
 export interface ClassBudSettings {
   theme: ThemePreference;
+  appAccent: AppAccent;
   notificationsEnabled: boolean;
   assistantName?: string;
   lastRoute: {

@@ -76,7 +76,27 @@ test("customizes the offline assistant from Settings", async ({ page }) => {
   await page.getByLabel("Assistant name").fill("Nova");
   await page.goto("/buddy");
   await expect(page.getByRole("heading", { name: "Nova", exact: true })).toBeVisible();
+  await expect(page.getByLabel("Ask Nova")).toBeVisible();
   await expect(page.getByPlaceholder("Message Nova…")).toBeVisible();
+  await expect(page.getByText("Nova answers from your saved ClassBud data.", { exact: false })).toBeVisible();
+});
+
+test("customizes and persists the app accent", async ({ page }) => {
+  await page.goto("/settings");
+  const purple = page.getByRole("radio", { name: "Purple accent" });
+  await purple.click();
+  await expect(purple).toBeChecked();
+  await expect(page.locator("html")).toHaveAttribute("data-ui-accent", "purple");
+
+  await purple.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("radio", { name: "Indigo accent" })).toBeChecked();
+  await expect(page.locator("html")).toHaveAttribute("data-ui-accent", "indigo");
+
+  await purple.click();
+  await page.reload();
+  await expect(page.getByRole("radio", { name: "Purple accent" })).toBeChecked();
+  await expect(page.locator("html")).toHaveAttribute("data-ui-accent", "purple");
 });
 
 test("shows the frozen current class and next class", async ({ page }, testInfo) => {

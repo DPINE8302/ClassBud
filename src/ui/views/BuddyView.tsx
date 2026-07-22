@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { ArrowUp, Bot, CheckSquare2, Clock3, MapPin, MessageCircle, MessageSquareText, Plus, Sparkles, UserRound } from "lucide-react";
+import { ArrowUp, Bot, CalendarDays, CalendarRange, CheckSquare2, Clock3, HelpCircle, MapPin, MessageCircle, MessageSquareText, Plus, Sparkles, UserRound } from "lucide-react";
 import { respondToBuddy, type ClassBudStateV2 } from "../../domain";
 
 interface Message {
@@ -11,8 +11,10 @@ interface Message {
 
 const QUICK_PROMPTS = [
   { label: "What’s next?", icon: Clock3 },
-  { label: "Where is Math?", icon: MapPin },
+  { label: "Today’s schedule", icon: CalendarDays },
+  { label: "Show me the full weekly schedule", icon: CalendarRange },
   { label: "Open tasks", icon: CheckSquare2 },
+  { label: "Where is Math?", icon: MapPin },
   { label: "Who teaches Game Design?", icon: UserRound },
 ];
 
@@ -62,43 +64,57 @@ export function BuddyView({ state }: { state: ClassBudStateV2 }) {
       <header className="page-heading buddy-heading">
         <span className="buddy-avatar" aria-hidden="true"><Bot /></span>
         <div><p>Your private, offline school assistant</p><h1>{assistantName}</h1></div>
-        <div className="buddy-heading__actions"><span className="offline-status"><i /> Offline &amp; private</span><button className="secondary-button secondary-button--small" type="button" onClick={newChat}><Plus aria-hidden="true" /> New chat</button></div>
+        <div className="buddy-heading__actions"><span className="offline-status"><i /> Offline &amp; private</span></div>
       </header>
       <section className="buddy-panel" aria-label={`Chat with ${assistantName}`}>
-        <div ref={messageLogRef} className="buddy-messages" role="log" aria-live="polite">
-          {messages.length === 1 ? <div className="buddy-welcome"><span aria-hidden="true"><MessageSquareText /></span><h2>Chat with {assistantName}</h2><p>Ask about your timetable, rooms, teachers, or unfinished tasks. Everything stays on this device.</p></div> : messages.map((message) => (
-            <div className={`message message--${message.role}`} key={message.id}>
-              {message.role === "buddy" ? <span className="message__avatar" aria-hidden="true"><Sparkles /></span> : null}
-              <div className="message__content">
-                <p>{message.body}</p>
-                {message.choices?.length ? (
-                  <div className="message__choices" aria-label="Choose a subject">
-                    {message.choices.map((choice) => (
-                      <button key={choice.id} type="button" onClick={() => submit(choice.label)}>{choice.label}</button>
-                    ))}
-                  </div>
-                ) : null}
+        <aside className="buddy-rail" aria-label="Buddy shortcuts">
+          <div className="buddy-rail__header">
+            <span aria-hidden="true"><MessageSquareText /></span>
+            <div><strong>ClassBud assistant</strong><small>Private schedule helper</small></div>
+          </div>
+          <div className="buddy-rail__shortcuts">
+            <button className="buddy-rail__new-chat" type="button" onClick={newChat}><Plus aria-hidden="true" /> New chat</button>
+            <div className="buddy-rail__questions">
+              <h2><HelpCircle aria-hidden="true" /> Quick questions</h2>
+              <div>
+                {suggestions.map(({ label, icon: Icon }) => (
+                  <button key={label} type="button" onClick={() => submit(label)}><Icon aria-hidden="true" /><span>{label}</span></button>
+                ))}
               </div>
             </div>
-          ))}
+          </div>
+        </aside>
+        <div className="buddy-conversation">
+          <div ref={messageLogRef} className="buddy-messages" role="log" aria-live="polite">
+            {messages.length === 1 ? <div className="buddy-welcome"><span aria-hidden="true"><MessageSquareText /></span><h2>Chat with {assistantName}</h2><p>Ask about your timetable, rooms, teachers, or unfinished tasks. Everything stays on this device.</p></div> : messages.map((message) => (
+              <div className={`message message--${message.role}`} key={message.id}>
+                {message.role === "buddy" ? <span className="message__avatar" aria-hidden="true"><Sparkles /></span> : null}
+                <div className="message__content">
+                  <p>{message.body}</p>
+                  {message.choices?.length ? (
+                    <div className="message__choices" aria-label="Choose a subject">
+                      {message.choices.map((choice) => (
+                        <button key={choice.id} type="button" onClick={() => submit(choice.label)}>{choice.label}</button>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            ))}
+          </div>
+          <form className="buddy-composer" onSubmit={onSubmit}>
+            <MessageCircle aria-hidden="true" />
+            <label className="sr-only" htmlFor="buddy-query">Ask {assistantName}</label>
+            <textarea ref={inputRef} id="buddy-query" rows={1} value={query} placeholder={`Message ${assistantName}…`} maxLength={300} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                submit(query);
+              }
+            }} />
+            <button type="submit" aria-label="Send message" disabled={!query.trim()}><ArrowUp aria-hidden="true" /></button>
+          </form>
+          <p className="buddy-disclaimer">{assistantName} answers from your saved ClassBud data. No message leaves this device.</p>
         </div>
-        <div className="quick-prompts" aria-label="Suggested questions">
-          {suggestions.map(({ label, icon: Icon }) => (
-            <button key={label} type="button" onClick={() => submit(label)}><Icon aria-hidden="true" /> {label}</button>
-          ))}
-        </div>
-        <form className="buddy-composer" onSubmit={onSubmit}>
-          <MessageCircle aria-hidden="true" />
-          <label className="sr-only" htmlFor="buddy-query">Ask Buddy</label>
-          <textarea ref={inputRef} id="buddy-query" rows={1} value={query} placeholder={`Message ${assistantName}…`} maxLength={300} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              submit(query);
-            }
-          }} />
-          <button type="submit" aria-label="Send message" disabled={!query.trim()}><ArrowUp aria-hidden="true" /></button>
-        </form>
-        <p className="buddy-disclaimer">Buddy answers from your saved ClassBud data. No message leaves this device.</p>
       </section>
     </div>
   );
