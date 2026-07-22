@@ -1,13 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="ClassBud">
   <defs>
-    <linearGradient id="bg" x1="76" y1="52" x2="436" y2="460" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#3B82F6"/>
+    <linearGradient id="background" x1="70" y1="48" x2="442" y2="470" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#168BFF"/>
+      <stop offset="0.52" stop-color="#0879F9"/>
       <stop offset="1" stop-color="#0754D8"/>
     </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(256 248) rotate(90) scale(220)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#85C7FF" stop-opacity="0.48"/>
+      <stop offset="0.62" stop-color="#42A5FF" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#0066E8" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="soft-glow" x="70" y="68" width="372" height="386" filterUnits="userSpaceOnUse">
+      <feGaussianBlur stdDeviation="17"/>
+    </filter>
   </defs>
-  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
-  <rect x="112" y="126" width="288" height="274" rx="55" fill="#fff"/>
-  <path d="M112 206h288" stroke="#DCE9FF" stroke-width="28"/>
-  <path d="M177 102v72M335 102v72" stroke="#fff" stroke-width="30" stroke-linecap="round"/>
-  <path d="m181 300 51 51 104-113" fill="none" stroke="#0A63E8" stroke-width="36" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect width="512" height="512" rx="116" fill="url(#background)"/>
+  <rect width="512" height="512" rx="116" fill="url(#glow)"/>
+  <rect x="126" y="133" width="260" height="254" rx="52" fill="none" stroke="#BFE4FF" stroke-opacity="0.3" stroke-width="22" filter="url(#soft-glow)"/>
+  <rect x="126" y="133" width="260" height="254" rx="52" fill="#FFFFFF" fill-opacity="0.1" stroke="#FFFFFF" stroke-width="22"/>
+  <path d="M126 210h260" stroke="#FFFFFF" stroke-width="22"/>
+  <path d="M190 112v58M322 112v58" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round"/>
+  <path d="m186 298 45 45 96-103" fill="none" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>
