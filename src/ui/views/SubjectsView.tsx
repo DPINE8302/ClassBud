@@ -14,7 +14,7 @@ export function SubjectsView({ state, onAddSubject, onEditSubject, onDeleteSubje
     <div className="page page--subjects">
       <header className="page-heading page-heading--with-action">
         <div><p>M.5 IM · Semester 1 · 2569 (2026)</p><h1>Subjects</h1></div>
-        <button className="primary-button" type="button" onClick={onAddSubject}><Plus aria-hidden="true" /> New subject</button>
+        <button className="primary-button" type="button" onClick={onAddSubject}><Plus aria-hidden="true" /><span>New subject</span></button>
       </header>
       <div className="subjects-grid">
         {state.subjects.map((subject) => {
