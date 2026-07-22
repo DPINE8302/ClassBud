@@ -459,10 +459,12 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 /* Subjects */
 .page--subjects { --blue: #6e8eac; --cyan: #b6d2d6; --amber: #d2b48c; --rose: #bc8f8f; --slate: #456882; }
 .subjects-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.subject-card { position: relative; min-width: 0; padding: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--event-color) 24%, var(--separator)); border-radius: 16px; background: linear-gradient(145deg, color-mix(in srgb, var(--event-color) 14%, var(--surface)) 0%, color-mix(in srgb, var(--event-color) 5%, var(--surface)) 48%, var(--surface) 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 34px rgba(0,0,0,.08); isolation: isolate; transition: transform 220ms cubic-bezier(.2,.8,.2,1), border-color 220ms ease, box-shadow 220ms ease; }
-.subject-card::before { position: absolute; z-index: -1; top: -70px; right: -50px; width: 190px; height: 190px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--event-color) 28%, transparent) 0%, transparent 70%); content: ""; pointer-events: none; }
-.subject-card::after { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: linear-gradient(115deg, rgba(255,255,255,.09), transparent 32%); content: ""; pointer-events: none; }
-.subject-card:hover, .subject-card:focus-within { border-color: color-mix(in srgb, var(--event-color) 52%, var(--separator)); box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 18px 44px color-mix(in srgb, var(--event-color) 14%, rgba(0,0,0,.2)); transform: translateY(-4px); }
+.subject-card { position: relative; min-width: 0; padding: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--event-color) 28%, var(--separator)); border-radius: 16px; background: linear-gradient(145deg, color-mix(in srgb, var(--event-color) 17%, var(--glass)) 0%, color-mix(in srgb, var(--event-color) 7%, var(--glass)) 45%, var(--glass) 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -1px 0 rgba(0,0,0,.08), 0 14px 38px rgba(0,0,0,.12); backdrop-filter: blur(24px) saturate(155%); -webkit-backdrop-filter: blur(24px) saturate(155%); isolation: isolate; transition: transform 220ms cubic-bezier(.2,.8,.2,1), border-color 220ms ease, box-shadow 220ms ease; }
+.subject-card::before { position: absolute; z-index: -1; top: -82px; right: -54px; width: 210px; height: 210px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--event-color) 34%, transparent) 0%, color-mix(in srgb, var(--event-color) 10%, transparent) 42%, transparent 72%); content: ""; pointer-events: none; transition: transform 300ms cubic-bezier(.2,.8,.2,1), opacity 220ms ease; }
+.subject-card::after { position: absolute; z-index: -1; inset: 0; border-radius: inherit; background: linear-gradient(118deg, rgba(255,255,255,.16), rgba(255,255,255,.035) 26%, transparent 48%); content: ""; opacity: .72; pointer-events: none; transition: opacity 220ms ease; }
+.subject-card:hover, .subject-card:focus-within { border-color: color-mix(in srgb, var(--event-color) 56%, var(--separator)); box-shadow: inset 0 1px 0 rgba(255,255,255,.19), inset 0 -1px 0 rgba(0,0,0,.1), 0 20px 50px color-mix(in srgb, var(--event-color) 16%, rgba(0,0,0,.24)); transform: translateY(-4px); }
+.subject-card:hover::before, .subject-card:focus-within::before { opacity: 1; transform: translate(-8px, 8px) scale(1.06); }
+.subject-card:hover::after, .subject-card:focus-within::after { opacity: 1; }
 .subject-card > header { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
 .subject-card__icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid color-mix(in srgb, var(--event-color) 56%, white); border-radius: 11px; color: var(--event-ink, #fff); background: linear-gradient(145deg, color-mix(in srgb, var(--event-color) 78%, white), var(--event-color)); box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 8px 20px color-mix(in srgb, var(--event-color) 22%, transparent); }
 .subject-card__icon svg { width: 16px; height: 16px; }
@@ -476,7 +478,7 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 .subject-card dt svg { width: 11px; height: 11px; }
 .subject-card dd { margin: 3px 0 0; overflow-wrap: anywhere; font-size: 11px; font-weight: 500; }
 .subject-schedule { display: flex; flex-wrap: wrap; gap: 6px; }
-.subject-schedule > span { display: grid; grid-template-columns: auto auto; gap: 0 5px; align-items: center; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--event-color) 18%, transparent); border-radius: 8px; color: var(--secondary-strong); background: color-mix(in srgb, var(--event-color) 10%, var(--raised)); font-size: 9px; }
+.subject-schedule > span { display: grid; grid-template-columns: auto auto; gap: 0 5px; align-items: center; padding: 6px 8px; border: 1px solid color-mix(in srgb, var(--event-color) 22%, var(--separator-soft)); border-radius: 8px; color: var(--secondary-strong); background: color-mix(in srgb, var(--event-color) 11%, var(--glass)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08); backdrop-filter: blur(12px) saturate(140%); -webkit-backdrop-filter: blur(12px) saturate(140%); font-size: 9px; }
 .subject-schedule > span strong { color: var(--label); }
 .subject-schedule > span small { grid-column: 1 / -1; color: var(--tertiary); font-size: 8px; }
 
@@ -752,6 +754,8 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 
 @media (prefers-reduced-transparency: reduce) {
   .glass-surface, .toast, .inspector-header { background: var(--shell); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .subject-card { background: color-mix(in srgb, var(--event-color) 8%, var(--surface)); backdrop-filter: none; -webkit-backdrop-filter: none; }
+  .subject-schedule > span { background: var(--raised); backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
 @media (prefers-contrast: more) {
