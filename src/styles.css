@@ -351,7 +351,7 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 .today-heading h1 { font-size: 32px; line-height: 38px; }
 .today-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 36px; align-items: start; }
 .today-primary { min-width: 0; }
-.now-card { position: relative; display: flex; width: 100%; min-height: 300px; flex-direction: column; align-items: flex-start; overflow: hidden; padding: 30px; border: 1px solid color-mix(in srgb, var(--event-color) 22%, var(--separator)); border-radius: 16px; color: var(--label); background: color-mix(in srgb, var(--event-color) 12%, var(--surface)); text-align: left; box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 12px 36px rgba(0,0,0,.12); }
+.now-card { position: relative; display: flex; width: 100%; min-height: 300px; flex-direction: column; align-items: flex-start; overflow: hidden; padding: 30px; border: 1px solid color-mix(in srgb, var(--event-color) 22%, var(--separator)); border-radius: 16px; color: var(--label); background: linear-gradient(145deg, transparent 30%, rgba(0,0,0,.1)), color-mix(in srgb, var(--event-color) 12%, var(--surface)); text-align: left; }
 .now-card::after { position: absolute; right: -80px; bottom: -135px; width: 390px; height: 310px; border: 1px solid color-mix(in srgb, var(--event-color) 18%, transparent); border-radius: 50%; background: color-mix(in srgb, var(--event-color) 8%, transparent); content: ""; transform: rotate(-18deg); }
 .now-card__ambient { position: absolute; inset: 0; background: linear-gradient(135deg, color-mix(in srgb, var(--event-color) 8%, transparent), transparent 46%); }
 .now-card__eyebrow, .now-card__title, .now-card__english, .now-card__details, .now-card__footer { position: relative; z-index: 1; }
@@ -421,8 +421,8 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 .day-band--assembly { right: 0; left: 0; border-radius: 0; background: color-mix(in srgb, var(--raised) 35%, transparent); }
 .day-band--assembly span:empty { display: none; }
 .day-band--break { min-height: 2px; padding: 0; border-radius: 0; background: color-mix(in srgb, var(--secondary) 24%, transparent); }
-.schedule-event { position: absolute; z-index: 3; top: calc(var(--event-top) + 2px); right: 1.2%; left: 1.2%; height: max(38px, calc(var(--event-height) - 4px)); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; overflow: hidden; padding: 6px 11px 6px 13px; border: 1px solid color-mix(in srgb, var(--event-color) 24%, var(--separator)); border-left: 3px solid var(--event-color); border-radius: 8px; color: var(--label); background: color-mix(in srgb, var(--event-color) 13%, var(--raised)); box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 4px 14px rgba(0,0,0,.1); text-align: left; transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
-.schedule-event:hover { border-color: color-mix(in srgb, var(--event-color) 46%, var(--separator)); border-left-color: var(--event-color); background: color-mix(in srgb, var(--event-color) 18%, var(--raised)); }
+.schedule-event { position: absolute; z-index: 3; top: calc(var(--event-top) + 2px); right: 1.2%; left: 1.2%; height: max(38px, calc(var(--event-height) - 4px)); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; overflow: hidden; padding: 6px 11px; border: 1px solid color-mix(in srgb, var(--event-color) 24%, var(--separator)); border-radius: 8px; color: var(--label); background: linear-gradient(135deg, transparent 34%, rgba(0,0,0,.11)), color-mix(in srgb, var(--event-color) 13%, var(--raised)); text-align: left; transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease; }
+.schedule-event:hover { border-color: color-mix(in srgb, var(--event-color) 46%, var(--separator)); background: linear-gradient(135deg, transparent 34%, rgba(0,0,0,.09)), color-mix(in srgb, var(--event-color) 18%, var(--raised)); }
 .schedule-event.is-selected { z-index: 5; box-shadow: 0 0 0 2px var(--shell), 0 0 0 4px var(--accent-text), 0 12px 28px rgba(0,0,0,.28); }
 .schedule-event__main, .schedule-event__meta { display: grid; min-width: 0; }
 .schedule-event__main strong { overflow: hidden; font-size: 13px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
@@ -529,10 +529,10 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
 /* Subjects */
 .page--subjects { --blue: #6e8eac; --cyan: #b6d2d6; --amber: #d2b48c; --rose: #bc8f8f; --slate: #456882; }
 .subjects-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
-.subject-card { position: relative; min-width: 0; padding: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--event-color) 18%, var(--separator)); border-radius: 16px; background: color-mix(in srgb, var(--event-color) 7%, var(--surface)); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), 0 8px 28px rgba(0,0,0,.1); transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
-.subject-card::before { position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: var(--event-color); content: ""; pointer-events: none; }
+.subject-card { position: relative; min-width: 0; padding: 18px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--event-color) 18%, var(--separator)); border-radius: 16px; background: linear-gradient(145deg, transparent 32%, rgba(0,0,0,.09)), color-mix(in srgb, var(--event-color) 7%, var(--surface)); transition: border-color 160ms ease; }
+.subject-card::before { display: none; }
 .subject-card::after { display: none; }
-.subject-card:hover, .subject-card:focus-within { border-color: color-mix(in srgb, var(--event-color) 38%, var(--separator)); background: color-mix(in srgb, var(--event-color) 10%, var(--surface)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 10px 32px rgba(0,0,0,.13); }
+.subject-card:hover, .subject-card:focus-within { border-color: color-mix(in srgb, var(--event-color) 38%, var(--separator)); background: linear-gradient(145deg, transparent 32%, rgba(0,0,0,.08)), color-mix(in srgb, var(--event-color) 10%, var(--surface)); }
 .subject-card > header { display: flex; align-items: center; gap: 9px; margin-bottom: 14px; }
 .subject-card__icon { display: grid; width: 38px; height: 38px; place-items: center; border: 1px solid color-mix(in srgb, var(--event-color) 26%, var(--separator)); border-radius: 11px; color: color-mix(in srgb, var(--event-color) 82%, var(--label)); background: color-mix(in srgb, var(--event-color) 14%, var(--raised)); }
 .subject-card__icon svg { width: 16px; height: 16px; }
@@ -797,13 +797,13 @@ dialog.modal::backdrop { background: rgba(0,0,0,.5); backdrop-filter: blur(5px);
   .routine-row strong { color: var(--label); font-size: 14px; font-weight: 600; line-height: 20px; }
   .routine-row small { color: var(--secondary-strong); font-size: 11px; line-height: 16px; }
   .agenda-row { padding-bottom: 8px; }
-  .agenda-row .schedule-event--compact { min-height: 86px; align-items: start; padding: 14px; border-radius: 12px; box-shadow: inset 0 1px 0 color-mix(in srgb, var(--event-ink, #fff) 14%, transparent), 0 8px 24px color-mix(in srgb, var(--event-color) 16%, transparent); }
+  .agenda-row .schedule-event--compact { min-height: 86px; align-items: start; padding: 14px; border-radius: 12px; box-shadow: none; }
   .agenda-row .schedule-event__main { align-content: start; gap: 3px; }
   .agenda-row .schedule-event__main strong { overflow: visible; font-size: 16px; font-weight: 600; line-height: 23px; text-overflow: clip; white-space: normal; }
   .agenda-row .schedule-event__english { display: block; overflow: hidden; font-size: 12px; font-weight: 500; line-height: 17px; text-overflow: ellipsis; white-space: nowrap; }
   .agenda-row .schedule-event__meta { align-content: start; padding-top: 2px; font-size: 11px; font-weight: 500; line-height: 16px; }
   .week-grid { grid-template-columns: 1fr; min-height: 0; gap: 14px; overflow: visible; margin: 0; border: 0; border-radius: 0; background: transparent; }
-  .week-column { min-width: 0; overflow: hidden; border: 1px solid var(--separator); border-radius: 14px; background: var(--surface); box-shadow: 0 8px 28px rgba(0,0,0,.1); }
+  .week-column { min-width: 0; overflow: hidden; border: 1px solid var(--separator); border-radius: 14px; background: var(--surface); }
   .week-column:last-child { border: 1px solid var(--separator); }
   .week-column > header { display: flex; align-items: baseline; gap: 8px; padding: 13px 15px; background: color-mix(in srgb, var(--raised) 68%, transparent); }
   .week-column > header span { font-size: 12px; font-weight: 600; letter-spacing: .02em; }
