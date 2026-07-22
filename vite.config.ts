@@ -24,8 +24,8 @@ export default defineConfig({
         scope: "/",
         display: "standalone",
         display_override: ["fullscreen", "standalone"],
-        background_color: "#18181B",
-        theme_color: "#18181B",
+        background_color: "#000000",
+        theme_color: "#000000",
         categories: ["education", "productivity"],
         icons: [
           { src: "/classbud-192.png", sizes: "192x192", type: "image/png" },
