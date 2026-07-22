@@ -109,6 +109,7 @@ function EventBlock({
     >
       <span className="schedule-event__main">
         <strong lang="th">{subject.nameTh}</strong>
+        {compact ? <small className="schedule-event__english">{subject.nameEn}</small> : null}
         {!compact ? <small>{clock.start} – {clock.end}</small> : null}
       </span>
       <span className="schedule-event__meta">
